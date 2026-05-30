@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Truck, ShieldCheck, MessageCircle } from 'lucide-react';
+import { ArrowRight, Truck, ShieldCheck, MessageCircle, Star } from 'lucide-react';
+import InstagramIcon from '@/components/InstagramIcon';
 import { createClient } from '@/utils/supabase/server';
 import ProductCard from '@/components/ProductCard';
 import type { Product } from '@/types';
@@ -26,38 +27,69 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-amber-50 via-white to-amber-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-            Todo para tu <span className="text-amber-600">mascota</span> en un solo lugar
+      <section className="relative overflow-hidden bg-gradient-to-br from-green-50 via-white to-lime-50">
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 text-9xl">🐾</div>
+          <div className="absolute bottom-10 right-10 text-9xl">🐾</div>
+          <div className="absolute top-1/2 left-1/2 text-9xl -translate-x-1/2 -translate-y-1/2">🐾</div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center relative">
+          <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 text-sm font-semibold px-4 py-2 rounded-full mb-6">
+            <Star className="w-4 h-4 fill-green-600 text-green-600" />
+            Accesorios para mascotas en Rafaela
+          </div>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+            Todo para tu{' '}
+            <span className="text-green-600 relative">
+              mascota
+              <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 8" fill="none">
+                <path d="M1 5.5C47 1.5 153 1.5 199 5.5" stroke="#16a34a" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
+            </span>
+            <br />en un solo lugar
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            Explorá nuestro catálogo de accesorios, armá tu pedido y confirmalo directamente por WhatsApp. ¡Sin complicaciones!
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+            Explorá nuestro catálogo de accesorios, armá tu pedido y confirmalo
+            directamente por WhatsApp. ¡Rápido, fácil y sin complicaciones!
           </p>
-          <Link
-            href="/productos"
-            className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-8 py-3.5 rounded-xl text-lg transition-colors"
-          >
-            Ver Productos
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/productos"
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold px-8 py-4 rounded-xl text-lg transition-all shadow-lg shadow-green-600/25"
+            >
+              Ver Productos
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <a
+              href="https://wa.me/5493492330291"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-green-400 text-gray-700 font-semibold px-8 py-4 rounded-xl text-lg transition-all"
+            >
+              <MessageCircle className="w-5 h-5 text-green-600" />
+              Escribinos
+            </a>
+          </div>
         </div>
       </section>
 
       {/* Categorías */}
       {categories && categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">
-            Categorías
-          </h2>
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+              Categorías
+            </h2>
+            <p className="text-gray-500">Encontrá lo que tu mascota necesita</p>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {categories.map((cat: { id: number; name: string; slug: string }) => (
               <Link
                 key={cat.id}
                 href={`/productos?categoria=${cat.slug}`}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:border-amber-400 hover:shadow-md transition-all"
+                className="group bg-white border-2 border-gray-100 rounded-2xl p-6 text-center hover:border-green-400 hover:shadow-lg transition-all duration-300"
               >
-                <span className="text-lg font-semibold text-gray-800">
+                <span className="text-lg font-bold text-gray-800 group-hover:text-green-700 transition-colors">
                   {cat.name}
                 </span>
               </Link>
@@ -68,51 +100,105 @@ export default async function HomePage() {
 
       {/* Productos destacados */}
       {products.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Productos Destacados
-            </h2>
-            <Link
-              href="/productos"
-              className="text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1 text-sm"
-            >
-              Ver todos <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+        <section className="bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+                  Productos Destacados
+                </h2>
+                <p className="text-gray-500 mt-1">Los favoritos de nuestros clientes</p>
+              </div>
+              <Link
+                href="/productos"
+                className="hidden sm:flex items-center gap-1 text-green-600 hover:text-green-700 font-semibold"
+              >
+                Ver todos <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+            <div className="sm:hidden text-center mt-8">
+              <Link
+                href="/productos"
+                className="inline-flex items-center gap-2 text-green-600 font-semibold"
+              >
+                Ver todos los productos <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </section>
       )}
 
       {/* Beneficios */}
-      <section className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="space-y-3">
-              <Truck className="w-10 h-10 text-amber-600 mx-auto" />
-              <h3 className="font-semibold text-gray-900">Envíos a Rafaela</h3>
+      <section className="bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+              ¿Por qué elegirnos?
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Truck className="w-7 h-7 text-green-600" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">Envíos en Rafaela</h3>
               <p className="text-sm text-gray-500">
-                Coordinamos la entrega directamente con vos.
+                Coordinamos la entrega directamente con vos por WhatsApp.
               </p>
             </div>
-            <div className="space-y-3">
-              <ShieldCheck className="w-10 h-10 text-amber-600 mx-auto" />
-              <h3 className="font-semibold text-gray-900">Productos de Calidad</h3>
+            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <ShieldCheck className="w-7 h-7 text-green-600" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">Calidad Garantizada</h3>
               <p className="text-sm text-gray-500">
                 Accesorios resistentes y seguros para tu mascota.
               </p>
             </div>
-            <div className="space-y-3">
-              <MessageCircle className="w-10 h-10 text-amber-600 mx-auto" />
-              <h3 className="font-semibold text-gray-900">Atención por WhatsApp</h3>
+            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <MessageCircle className="w-7 h-7 text-green-600" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">Compra por WhatsApp</h3>
               <p className="text-sm text-gray-500">
-                Comprá fácil y rápido sin pasarelas de pago.
+                Sin registros ni pasarelas. Pedí y coordiná al instante.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="bg-green-600">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
+            ¿Listo para mimar a tu mascota?
+          </h2>
+          <p className="text-green-100 text-lg mb-8 max-w-xl mx-auto">
+            Explorá nuestro catálogo completo y armá tu pedido. ¡Te esperamos!
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/productos"
+              className="inline-flex items-center gap-2 bg-white text-green-700 font-bold px-8 py-4 rounded-xl text-lg hover:bg-green-50 transition-colors"
+            >
+              Ver Catálogo
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <a
+              href="https://instagram.com/hipermascotarafaela"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border-2 border-white/30 text-white font-semibold px-8 py-4 rounded-xl text-lg hover:bg-white/10 transition-colors"
+            >
+              <InstagramIcon className="w-5 h-5" />
+              Seguinos en Instagram
+            </a>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import type { CartItem } from '@/types';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493492330921';
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493492330291';
 
 function formatPrice(price: number): string {
   return price.toLocaleString('es-AR', { minimumFractionDigits: 0 });

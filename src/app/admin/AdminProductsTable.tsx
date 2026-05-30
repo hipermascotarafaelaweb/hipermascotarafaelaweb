@@ -162,7 +162,7 @@ export default function AdminProductsTable({
         <p className="text-sm text-gray-500">{products.length} productos</p>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nuevo Producto
@@ -184,7 +184,7 @@ export default function AdminProductsTable({
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               {error && (
-                <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>
+                <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>
               )}
 
               <div>
@@ -194,7 +194,7 @@ export default function AdminProductsTable({
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export default function AdminProductsTable({
                   rows={3}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm resize-none"
                 />
               </div>
 
@@ -218,7 +218,7 @@ export default function AdminProductsTable({
                     step="0.01"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                   />
                 </div>
                 <div>
@@ -229,7 +229,7 @@ export default function AdminProductsTable({
                     min="0"
                     value={form.stock}
                     onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                   />
                 </div>
               </div>
@@ -239,7 +239,7 @@ export default function AdminProductsTable({
                 <select
                   value={form.category_id}
                   onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 >
                   <option value="">Sin categoría</option>
                   {categories.map((cat) => (
@@ -252,7 +252,7 @@ export default function AdminProductsTable({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
-                <label className="flex items-center gap-2 cursor-pointer border border-dashed border-gray-300 rounded-lg px-4 py-3 hover:border-amber-400 transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer border border-dashed border-gray-300 rounded-xl px-4 py-3 hover:border-green-400 transition-colors">
                   <Upload className="w-4 h-4 text-gray-400" />
                   <span className="text-sm text-gray-500">
                     {form.image ? form.image.name : 'Seleccionar archivo'}
@@ -273,7 +273,7 @@ export default function AdminProductsTable({
                   type="checkbox"
                   checked={form.is_featured}
                   onChange={(e) => setForm({ ...form, is_featured: e.target.checked })}
-                  className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
                 />
                 <span className="text-sm text-gray-700">Producto destacado</span>
               </label>
@@ -281,7 +281,7 @@ export default function AdminProductsTable({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-2.5 rounded-xl transition-colors"
               >
                 <Save className="w-4 h-4" />
                 {loading ? 'Guardando...' : 'Guardar'}
@@ -330,7 +330,7 @@ export default function AdminProductsTable({
                           product.stock <= 0
                             ? 'text-red-600'
                             : product.stock <= 5
-                              ? 'text-amber-600'
+                              ? 'text-green-600'
                               : 'text-green-600'
                         }`}
                       >
@@ -339,7 +339,7 @@ export default function AdminProductsTable({
                     </td>
                     <td className="px-4 py-3 text-center">
                       {product.is_featured ? (
-                        <span className="inline-block w-2 h-2 bg-amber-500 rounded-full" />
+                        <span className="inline-block w-2 h-2 bg-green-500 rounded-full" />
                       ) : (
                         <span className="inline-block w-2 h-2 bg-gray-300 rounded-full" />
                       )}
@@ -348,7 +348,7 @@ export default function AdminProductsTable({
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openEdit(product)}
-                          className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"
+                          className="p-1.5 text-gray-400 hover:text-green-600 transition-colors"
                           aria-label="Editar"
                         >
                           <Pencil className="w-4 h-4" />

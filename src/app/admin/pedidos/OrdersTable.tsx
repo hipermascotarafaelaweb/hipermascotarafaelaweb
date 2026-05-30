@@ -95,7 +95,7 @@ export default function OrdersTable({
                       onChange={(e) =>
                         updateStatus(order.id, e.target.value as Order['status'])
                       }
-                      className={`text-xs font-semibold px-3 py-1 rounded-full border-0 focus:ring-2 focus:ring-amber-500 ${statusColors[order.status]}`}
+                      className={`text-xs font-semibold px-3 py-1 rounded-full border-0 focus:ring-2 focus:ring-green-500 ${statusColors[order.status]}`}
                     >
                       <option value="Pendiente">Pendiente</option>
                       <option value="Entregado">Entregado</option>
