@@ -1,23 +1,46 @@
-import { createClient } from '@/utils/supabase/server';
-import { Package, DollarSign, AlertTriangle } from 'lucide-react';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Package, AlertTriangle, DollarSign, Loader2 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
 import type { Product, Category } from '@/types';
 import AdminProductsTable from './AdminProductsTable';
 
-export default async function AdminPage() {
-  const supabase = await createClient();
+export default function AdminPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [{ data: products }, { data: categories }] = await Promise.all([
-    supabase
-      .from('products')
-      .select('*, category:categories(*)')
-      .order('created_at', { ascending: false }),
-    supabase.from('categories').select('*').order('name'),
-  ]);
+  const fetchData = () => {
+    const supabase = createClient();
+    Promise.all([
+      supabase
+        .from('products')
+        .select('*, category:categories(*)')
+        .order('created_at', { ascending: false }),
+      supabase.from('categories').select('*').order('name'),
+    ]).then(([productsRes, categoriesRes]) => {
+      setProducts((productsRes.data as Product[]) || []);
+      setCategories((categoriesRes.data as Category[]) || []);
+      setLoading(false);
+    });
+  };
 
-  const allProducts = (products as Product[]) || [];
-  const totalProducts = allProducts.length;
-  const lowStock = allProducts.filter((p) => p.stock > 0 && p.stock <= 5).length;
-  const outOfStock = allProducts.filter((p) => p.stock <= 0).length;
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+      </div>
+    );
+  }
+
+  const totalProducts = products.length;
+  const lowStock = products.filter((p) => p.stock > 0 && p.stock <= 5).length;
+  const outOfStock = products.filter((p) => p.stock <= 0).length;
 
   return (
     <div>
@@ -54,8 +77,9 @@ export default async function AdminPage() {
 
       <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Gestión de Productos</h1>
       <AdminProductsTable
-        initialProducts={allProducts}
-        categories={(categories as Category[]) || []}
+        initialProducts={products}
+        categories={categories}
+        onRefresh={fetchData}
       />
     </div>
   );

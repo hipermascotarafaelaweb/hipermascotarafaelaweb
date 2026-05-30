@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Plus, Pencil, Trash2, X, Save, Upload } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { Product, Category } from '@/types';
@@ -33,9 +32,11 @@ function formatPrice(price: number): string {
 export default function AdminProductsTable({
   initialProducts,
   categories,
+  onRefresh,
 }: {
   initialProducts: Product[];
   categories: Category[];
+  onRefresh?: () => void;
 }) {
   const [products, setProducts] = useState(initialProducts);
   const [showForm, setShowForm] = useState(false);
@@ -43,7 +44,6 @@ export default function AdminProductsTable({
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
 
   const supabase = createClient();
 
@@ -134,7 +134,6 @@ export default function AdminProductsTable({
 
     setShowForm(false);
     setLoading(false);
-    router.refresh();
 
     const { data: refreshed } = await supabase
       .from('products')
@@ -142,6 +141,7 @@ export default function AdminProductsTable({
       .order('created_at', { ascending: false });
 
     if (refreshed) setProducts(refreshed as Product[]);
+    onRefresh?.();
   };
 
   const handleDelete = async (id: number) => {
