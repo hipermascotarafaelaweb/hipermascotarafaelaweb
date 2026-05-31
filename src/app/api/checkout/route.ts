@@ -106,31 +106,33 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient();
 
-    // Create the order
+    // Create the order and deduct stock atomically
+    const orderItems = items.map((i: CartItem) => ({
+      product_id: i.product.id,
+      name: i.product.name,
+      qty: i.quantity,
+      price: i.product.price,
+    }));
+
     const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert({
+      .rpc('create_order_with_stock', {
         customer_name: `${customer.first_name} ${customer.last_name}`,
         customer_dni: customer.dni,
         customer_phone: customer.phone,
         customer_address: customer.address,
-        items: items.map((i: CartItem) => ({
-          product_id: i.product.id,
-          name: i.product.name,
-          qty: i.quantity,
-          price: i.product.price,
-        })),
+        items: orderItems,
         total_amount: finalTotal,
         coupon_code: coupon?.code || null,
         coupon_discount: couponDiscount || 0,
         status: 'Pendiente',
-      })
-      .select()
-      .single();
+      });
 
     if (orderError || !orderData) {
       console.error('Order creation error:', orderError);
-      return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+      const message = orderError?.message?.includes('Stock insuficiente')
+        ? orderError.message
+        : 'Error al crear el pedido';
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
     // Save customer

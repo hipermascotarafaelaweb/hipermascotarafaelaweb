@@ -133,6 +133,62 @@ drop policy if exists "admin borra fotos" on storage.objects;
 create policy "admin borra fotos" on storage.objects for delete using (bucket_id = 'products' and auth.role() = 'authenticated');
 
 -- ============================================================
+--  FUNCIÓN: crear pedido y descontar stock atómicamente
+-- ============================================================
+create or replace function public.create_order_with_stock(
+  customer_name text,
+  customer_dni text,
+  customer_phone text,
+  customer_address text,
+  items jsonb,
+  total_amount numeric,
+  coupon_code text default null,
+  coupon_discount numeric default 0,
+  status text default 'Pendiente'
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  item jsonb;
+  pid bigint;
+  qty int;
+  available int;
+  new_order orders%rowtype;
+begin
+  -- Verify and deduct stock for each item
+  for item in select * from jsonb_array_elements(items)
+  loop
+    pid := (item->>'product_id')::bigint;
+    qty := (item->>'qty')::int;
+
+    select stock into available from products where id = pid for update;
+
+    if available is null then
+      raise exception 'Producto con id % no encontrado', pid;
+    end if;
+
+    if available < qty then
+      raise exception 'Stock insuficiente para "%". Disponible: %, solicitado: %',
+        item->>'name', available, qty;
+    end if;
+
+    update products set stock = stock - qty where id = pid;
+  end loop;
+
+  -- Create the order
+  insert into orders (customer_name, customer_dni, customer_phone, customer_address,
+                      items, total_amount, coupon_code, coupon_discount, status)
+  values (customer_name, customer_dni, customer_phone, customer_address,
+          items, total_amount, coupon_code, coupon_discount, status)
+  returning * into new_order;
+
+  return to_jsonb(new_order);
+end;
+$$;
+
+-- ============================================================
 --  CATEGORÍAS INICIALES (accesorios para perros y gatos)
 -- ============================================================
 insert into categories (name, slug) values
