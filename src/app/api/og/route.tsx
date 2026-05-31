@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     }
 
     if (type === 'product' && productId) {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data: product } = await supabase
         .from('products')
         .select('*')
