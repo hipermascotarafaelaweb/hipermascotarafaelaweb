@@ -6,7 +6,7 @@ import type { CartItem, Product } from '@/types';
 
 interface CartState {
   items: CartItem[];
-  addItem: (product: Product) => void;
+  addItem: (product: Product, qty?: number) => void;
   removeItem: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
@@ -14,23 +14,30 @@ interface CartState {
   totalPrice: () => number;
 }
 
+/** Limita la cantidad al stock disponible del producto. */
+function capToStock(product: Product, qty: number): number {
+  const max = product.stock > 0 ? product.stock : 0;
+  return Math.min(Math.max(qty, 1), max);
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
 
-      addItem: (product: Product) => {
+      addItem: (product: Product, qty = 1) => {
         const existing = get().items.find((i) => i.product.id === product.id);
         if (existing) {
+          const next = capToStock(product, existing.quantity + qty);
           set({
             items: get().items.map((i) =>
-              i.product.id === product.id
-                ? { ...i, quantity: i.quantity + 1 }
-                : i
+              i.product.id === product.id ? { ...i, quantity: next } : i
             ),
           });
         } else {
-          set({ items: [...get().items, { product, quantity: 1 }] });
+          set({
+            items: [...get().items, { product, quantity: capToStock(product, qty) }],
+          });
         }
       },
 
@@ -45,7 +52,9 @@ export const useCartStore = create<CartState>()(
         }
         set({
           items: get().items.map((i) =>
-            i.product.id === productId ? { ...i, quantity } : i
+            i.product.id === productId
+              ? { ...i, quantity: capToStock(i.product, quantity) }
+              : i
           ),
         });
       },

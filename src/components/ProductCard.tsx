@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { ShoppingCart, PawPrint, Check } from 'lucide-react';
+import Link from 'next/link';
+import { ShoppingCart, PawPrint, Check, Star } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@/types';
 import { useCartStore } from '@/store/cart';
@@ -25,7 +26,7 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
       className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:border-brand-200 transition-all duration-300 flex flex-col animate-fade-in-up"
       style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}
     >
-      <div className="relative aspect-square bg-brand-50/50 overflow-hidden">
+      <Link href={`/producto?id=${product.id}`} className="relative aspect-square bg-brand-50/50 overflow-hidden block">
         {product.image_url ? (
           <Image
             src={product.image_url}
@@ -42,8 +43,8 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
 
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
           {product.is_featured && !outOfStock && (
-            <span className="bg-brand-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
-              ⭐ Destacado
+            <span className="bg-brand-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
+              <Star className="w-3 h-3 fill-current" /> Destacado
             </span>
           )}
           {lowStock && (
@@ -60,7 +61,7 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       <div className="p-4 flex flex-col flex-1">
         {product.category && (
@@ -68,9 +69,9 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
             {product.category.name}
           </span>
         )}
-        <h3 className="font-bold text-gray-900 leading-snug line-clamp-2 mb-1">
+        <Link href={`/producto?id=${product.id}`} className="font-bold text-gray-900 leading-snug line-clamp-2 mb-1 hover:text-brand-700 transition-colors">
           {product.name}
-        </h3>
+        </Link>
         {product.description && (
           <p className="text-sm text-gray-500 line-clamp-2 mb-3">
             {product.description}

@@ -231,7 +231,7 @@ export default function CartDrawer({
               <div className="border-t border-gray-100 p-5 space-y-4 bg-gray-50/80">
                 <div className="flex items-center gap-2 text-brand-700 bg-brand-50 rounded-xl px-3 py-2 text-sm font-semibold">
                   <Truck className="w-4 h-4" />
-                  Envío a domicilio gratis 🎉
+                  Envío a domicilio gratis
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-semibold">Total</span>

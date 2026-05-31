@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Phone, MapPin, CreditCard, Package, ClipboardList } from 'lucide-react';
+import { User, Phone, MapPin, CreditCard, Package, ClipboardList, Truck } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { Order } from '@/types';
 import { formatPrice, formatDate } from '@/utils/format';
@@ -119,7 +119,9 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
             </ul>
 
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-              <span className="text-xs text-gray-400">🚚 Envío gratis</span>
+              <span className="text-xs text-gray-400 inline-flex items-center gap-1">
+                <Truck className="w-3.5 h-3.5" /> Envío gratis
+              </span>
               <span className="font-extrabold text-gray-900">{formatPrice(order.total_amount)}</span>
             </div>
           </div>

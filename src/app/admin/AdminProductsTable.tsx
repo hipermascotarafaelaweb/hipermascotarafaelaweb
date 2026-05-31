@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Plus, Pencil, Trash2, X, Save, Upload, PawPrint, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, Upload, PawPrint, Search, Star } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { Product, Category } from '@/types';
 import { formatPrice } from '@/utils/format';
@@ -204,7 +204,7 @@ export default function AdminProductsTable({
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900 truncate flex items-center gap-1.5">
                             {product.name}
-                            {product.is_featured && <span className="text-amber-500 text-xs">⭐</span>}
+                            {product.is_featured && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />}
                           </p>
                           <p className="text-xs text-gray-400 sm:hidden">{product.category?.name || 'Sin categoría'}</p>
                         </div>

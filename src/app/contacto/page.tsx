@@ -24,7 +24,7 @@ export default function ContactoPage() {
           <div className="space-y-5">
             {[
               { icon: MapPin, title: 'Ubicación', value: 'Rafaela, Santa Fe, Argentina' },
-              { icon: Truck, title: 'Envíos', value: 'A domicilio y siempre gratis 🎉' },
+              { icon: Truck, title: 'Envíos', value: 'A domicilio y siempre gratis' },
               { icon: Clock, title: 'Horarios', value: 'Lunes a Sábado: 9:00 - 19:00' },
             ].map((row) => (
               <div key={row.title} className="flex items-start gap-4">

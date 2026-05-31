@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Baloo_2, Itim } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
@@ -21,10 +21,16 @@ const itim = Itim({
   variable: '--font-itim',
 });
 
+const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
+
 export const metadata: Metadata = {
-  title: 'Hipermascota Rafaela | Accesorios para Mascotas',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Hipermascota Rafaela | Accesorios para Mascotas',
+    template: '%s | Hipermascota Rafaela',
+  },
   description:
-    'Tienda de accesorios para mascotas en Rafaela, Santa Fe. Collares, juguetes, comederos, camas y mucho más. Hacé tu pedido por WhatsApp.',
+    'Tienda de accesorios para perros y gatos en Rafaela, Santa Fe. Collares, juguetes, comederos, camas y mucho más. Envío gratis y pedido por WhatsApp.',
   keywords: [
     'accesorios mascotas',
     'Rafaela',
@@ -33,14 +39,21 @@ export const metadata: Metadata = {
     'juguetes perros',
     'juguetes gatos',
     'comederos',
+    'envío gratis',
   ],
   openGraph: {
     title: 'Hipermascota Rafaela | Accesorios para Mascotas',
     description:
-      'Tienda de accesorios para mascotas en Rafaela. Hacé tu pedido por WhatsApp.',
+      'Accesorios para perros y gatos en Rafaela. Envío gratis y pedido por WhatsApp.',
+    url: SITE_URL,
+    siteName: 'Hipermascota Rafaela',
     type: 'website',
     locale: 'es_AR',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#8dc63f',
 };
 
 export default function RootLayout({
