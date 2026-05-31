@@ -42,6 +42,7 @@ export default function CartDrawer({
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
 
   const total = totalPrice();
   const couponDiscount = coupon ? (total * coupon.discount_percent) / 100 : 0;
@@ -86,6 +87,27 @@ export default function CartDrawer({
     }
     setCoupon(c);
     setCouponCode('');
+  };
+
+  const fetchCustomerByDni = async (dni: string) => {
+    if (!dni.trim()) return;
+    setLoadingCustomer(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('dni', dni.trim())
+      .single();
+    setLoadingCustomer(false);
+    if (data) {
+      setCustomer({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        dni: data.dni,
+        phone: data.phone,
+        address: data.address || '',
+      });
+    }
   };
 
   const validate = (): boolean => {
@@ -395,11 +417,30 @@ export default function CartDrawer({
                   Completá tus datos para coordinar el <strong>envío gratis</strong>. Tu
                   pedido se confirma por WhatsApp.
                 </p>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">DNI</label>
+                  <input
+                    value={customer.dni}
+                    onChange={(e) => {
+                      const dni = e.target.value;
+                      setCustomer({ dni });
+                      if (dni.length >= 7) {
+                        fetchCustomerByDni(dni);
+                      }
+                    }}
+                    placeholder="30123456"
+                    inputMode="numeric"
+                    disabled={loadingCustomer}
+                    className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-gray-100 ${
+                      errors.dni ? 'border-red-400' : 'border-gray-200'
+                    }`}
+                  />
+                  {errors.dni && <p className="text-xs text-red-500 mt-1">{errors.dni}</p>}
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   {field('first_name', 'Nombre', { placeholder: 'Juan' })}
                   {field('last_name', 'Apellido', { placeholder: 'Pérez' })}
                 </div>
-                {field('dni', 'DNI', { placeholder: '30123456', inputMode: 'numeric' })}
                 {field('phone', 'Teléfono', { placeholder: '3492 123456', inputMode: 'tel' })}
                 {field('address', 'Dirección de envío', {
                   placeholder: 'Calle, número, barrio, ciudad',
