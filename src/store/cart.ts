@@ -5,6 +5,9 @@ import { persist } from 'zustand/middleware';
 import type { CartItem, Product } from '@/types';
 import { effectivePrice } from '@/utils/format';
 
+// Carrito local + syncronización opcional con Supabase para multi-device
+let syncTimer: NodeJS.Timeout | null = null;
+
 interface CartState {
   items: CartItem[];
   addItem: (product: Product, qty?: number) => void;
