@@ -28,7 +28,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data: orders } = await supabase.from('orders').select('*');
+      const { data: orders } = await supabase.from('orders').select('*').neq('status', 'Cancelado');
       const orders_list = (orders as Order[]) || [];
 
       // Calcular estadísticas
