@@ -22,6 +22,8 @@ const itim = Itim({
   variable: '--font-itim',
 });
 
+const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -54,8 +56,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#8dc63f',
 };
-
-const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
 
 export default function RootLayout({
   children,
