@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)"
+    ]
+  },
+  "sandbox": {
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "*.github.com"
+      ]
+    }
+  }
+}
