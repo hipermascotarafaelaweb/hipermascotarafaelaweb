@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   X, Minus, Plus, Trash2, MessageCircle, ShoppingBag, PawPrint,
-  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper,
+  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper, Ticket, Check,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
@@ -11,7 +11,7 @@ import { useCustomerStore } from '@/store/customer';
 import { generateWhatsAppLink } from '@/utils/whatsapp';
 import { createClient } from '@/utils/supabase/client';
 import { formatPrice, effectivePrice, hasDiscount } from '@/utils/format';
-import type { CustomerInput } from '@/types';
+import type { CustomerInput, Coupon } from '@/types';
 
 type Step = 'cart' | 'form' | 'done';
 
@@ -35,13 +35,54 @@ export default function CartDrawer({
   const [sending, setSending] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInput, string>>>({});
   const [sentLink, setSentLink] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [coupon, setCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const total = totalPrice();
+  const couponDiscount = coupon ? (total * coupon.discount_percent) / 100 : 0;
+  const finalTotal = total - couponDiscount;
 
   // Cierra el panel y, si el pedido ya se envió, vuelve al estado inicial.
   const handleClose = () => {
     onClose();
     if (step === 'done') setStep('cart');
+  };
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Ingresá un código.');
+      return;
+    }
+    setApplyingCoupon(true);
+    setCouponError('');
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', couponCode.toUpperCase())
+      .single();
+    setApplyingCoupon(false);
+    if (error || !data) {
+      setCouponError('Código inválido.');
+      return;
+    }
+    const c = data as Coupon;
+    if (!c.active) {
+      setCouponError('Cupón inactivo.');
+      return;
+    }
+    if (c.valid_until && new Date(c.valid_until) < new Date()) {
+      setCouponError('Cupón expirado.');
+      return;
+    }
+    if (c.max_uses && c.uses_count >= c.max_uses) {
+      setCouponError('Cupón agotado.');
+      return;
+    }
+    setCoupon(c);
+    setCouponCode('');
   };
 
   const validate = (): boolean => {
@@ -93,13 +134,23 @@ export default function CartDrawer({
           qty: i.quantity,
           price: i.product.price,
         })),
-        total_amount: total,
+        total_amount: finalTotal,
+        coupon_code: coupon?.code || null,
+        coupon_discount: couponDiscount,
       });
+
+      // Incrementar el contador de uso del cupón
+      if (coupon) {
+        await supabase
+          .from('coupons')
+          .update({ uses_count: coupon.uses_count + 1 })
+          .eq('id', coupon.id);
+      }
     } catch {
       // Si falla el registro, igual seguimos al pedido por WhatsApp.
     }
 
-    const link = generateWhatsAppLink(items, total, clean);
+    const link = generateWhatsAppLink(items, finalTotal, clean, couponDiscount);
     window.open(link, '_blank');
 
     clearCart();
@@ -270,13 +321,62 @@ export default function CartDrawer({
               </ul>
 
               <div className="border-t border-gray-100 p-5 space-y-4 bg-gray-50/80">
+                {/* Cupón */}
+                <div className="flex gap-2">
+                  <input
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value);
+                      setCouponError('');
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
+                    placeholder="Código cupón"
+                    className={`flex-1 px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+                      couponError ? 'border-red-400' : 'border-gray-200'
+                    }`}
+                  />
+                  <button
+                    onClick={applyCoupon}
+                    disabled={applyingCoupon}
+                    className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-300 text-white font-bold rounded-xl text-sm transition-colors"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+                {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+                {coupon && (
+                  <div className="flex items-center gap-2 bg-green-50 text-green-700 rounded-xl px-3 py-2 text-sm font-semibold">
+                    <Check className="w-4 h-4" />
+                    Cupón {coupon.code} aplicado (-{coupon.discount_percent}%)
+                    <button
+                      onClick={() => setCoupon(null)}
+                      className="ml-auto text-green-600 hover:text-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2 text-brand-700 bg-brand-50 rounded-xl px-3 py-2 text-sm font-semibold">
                   <Truck className="w-4 h-4" />
                   Envío a domicilio gratis
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 font-semibold">Total</span>
-                  <span className="text-2xl font-extrabold text-gray-900">{formatPrice(total)}</span>
+
+                <div className="space-y-2 pt-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(total)}</span>
+                  </div>
+                  {coupon && (
+                    <div className="flex justify-between text-sm text-green-600 font-semibold">
+                      <span>Descuento ({coupon.discount_percent}%)</span>
+                      <span>-{formatPrice(couponDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span className="text-gray-600 font-semibold">Total</span>
+                    <span className="text-2xl font-extrabold text-gray-900">{formatPrice(finalTotal)}</span>
+                  </div>
                 </div>
                 <button
                   onClick={() => setStep('form')}
@@ -319,9 +419,21 @@ export default function CartDrawer({
               </div>
 
               <div className="border-t border-gray-100 p-5 space-y-3 bg-gray-50/80">
+                {coupon && (
+                  <div className="space-y-2 pb-3 border-b border-gray-200">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-600 font-semibold">
+                      <span>{coupon.code} (-{coupon.discount_percent}%)</span>
+                      <span>-{formatPrice(couponDiscount)}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-semibold">Total</span>
-                  <span className="text-xl font-extrabold text-gray-900">{formatPrice(total)}</span>
+                  <span className="text-xl font-extrabold text-gray-900">{formatPrice(finalTotal)}</span>
                 </div>
                 <button
                   onClick={handleConfirm}

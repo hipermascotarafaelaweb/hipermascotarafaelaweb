@@ -10,7 +10,8 @@ function formatNumber(price: number): string {
 export function generateWhatsAppLink(
   items: CartItem[],
   total: number,
-  customer?: CustomerInput
+  customer?: CustomerInput,
+  couponDiscount?: number
 ): string {
   const itemLines = items
     .map(
@@ -29,12 +30,15 @@ Teléfono: ${customer.phone}
 📍 Dirección de envío: ${customer.address}`
     : '';
 
+  const discount = couponDiscount ? `\n🎉 Descuento: -$${formatNumber(couponDiscount)}` : '';
+  const finalTotal = couponDiscount ? total - couponDiscount : total;
+
   const message = `🐾 ¡Hola Hipermascota! Quiero realizar el siguiente pedido:
 
 -----------------------------------------
 ${itemLines}
 -----------------------------------------
-💰 Total: $${formatNumber(total)}
+💰 Total: $${formatNumber(finalTotal)}${discount}
 🚚 Envío a domicilio: GRATIS${datosCliente}
 
 ¿Me confirman la disponibilidad para coordinar el envío? ¡Muchas gracias!`;
