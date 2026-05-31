@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, PawPrint, Dog, Cat, PawPrint as PawIcon, ChevronDown } from 'lucide-react';
+import { Search, PawPrint, Dog, Cat, PawPrint as PawIcon, SlidersHorizontal, X } from 'lucide-react';
 import type { Product, Category, PetType } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { cn } from '@/utils/cn';
@@ -34,7 +34,18 @@ export default function ProductGrid({
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [onSaleOnly, setOnSaleOnly] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const hasActiveFilters = pet !== 'all' || selectedCategory !== 'all' || minPrice || maxPrice || onSaleOnly || sort !== 'recent';
+
+  const clearAllFilters = () => {
+    setPet('all');
+    setSelectedCategory('all');
+    setMinPrice('');
+    setMaxPrice('');
+    setOnSaleOnly(false);
+    setSort('recent');
+  };
 
   const filtered = useMemo(() => {
     let result = products;
@@ -77,129 +88,167 @@ export default function ProductGrid({
 
   return (
     <div>
-      <div className="relative mb-5">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Buscar productos…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
-        />
-      </div>
-
-      <div className="flex gap-2 mb-4 flex-wrap items-center">
-        {petFilters.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setPet(f.value)}
-            className={cn(
-              'flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all',
-              pet === f.value
-                ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-brand-400'
-            )}
-          >
-            <f.icon className="w-4 h-4" />
-            {f.label}
-          </button>
-        ))}
+      {/* Search + Filter button */}
+      <div className="flex gap-2 mb-5">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+          />
+        </div>
         <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-white border border-gray-200 text-gray-600 hover:border-brand-400 transition-all"
+          onClick={() => setShowFilters(!showFilters)}
+          className={cn(
+            'flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold transition-all shrink-0',
+            showFilters
+              ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-brand-400'
+          )}
         >
-          <span>Filtros avanzados</span>
-          <ChevronDown className={cn('w-4 h-4 transition-transform', showAdvanced && 'rotate-180')} />
+          <SlidersHorizontal className="w-4 h-4" />
+          <span className="hidden sm:inline">Filtrar</span>
+          {hasActiveFilters && (
+            <span className={cn(
+              'w-2 h-2 rounded-full',
+              showFilters ? 'bg-white' : 'bg-brand-600'
+            )} />
+          )}
         </button>
       </div>
 
-      {showAdvanced && (
-        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 mb-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Filter panel */}
+      {showFilters && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6 space-y-5 animate-in slide-in-from-top-2 duration-200">
+          {/* Mascota */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Mascota</label>
+            <div className="flex gap-2">
+              {petFilters.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setPet(f.value)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all',
+                    pet === f.value
+                      ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                      : 'bg-gray-50 border border-gray-200 text-gray-600 hover:border-brand-400'
+                  )}
+                >
+                  <f.icon className="w-4 h-4" />
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Categoría */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Categoría</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={cn(
+                  'px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all',
+                  selectedCategory === 'all'
+                    ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                    : 'bg-gray-50 border border-gray-200 text-gray-700 hover:border-brand-400'
+                )}
+              >
+                Todas
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.slug)}
+                  className={cn(
+                    'px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all',
+                    selectedCategory === cat.slug
+                      ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                      : 'bg-gray-50 border border-gray-200 text-gray-700 hover:border-brand-400'
+                  )}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Precio + Ordenar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Precio mínimo</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Precio min</label>
               <input
                 type="number"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
                 placeholder="$0"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Precio máximo</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Precio max</label>
               <input
                 type="number"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
                 placeholder="Sin límite"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Ordenar por</label>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortOption)}
+                className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                <option value="recent">Más recientes</option>
+                <option value="price_asc">Menor precio</option>
+                <option value="price_desc">Mayor precio</option>
+              </select>
+            </div>
           </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={onSaleOnly}
-              onChange={(e) => setOnSaleOnly(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-brand-600"
-            />
-            <span className="text-sm font-semibold text-gray-700">Solo productos en oferta</span>
-          </label>
-          {(minPrice || maxPrice || onSaleOnly) && (
-            <button
-              onClick={() => {
-                setMinPrice('');
-                setMaxPrice('');
-                setOnSaleOnly(false);
-              }}
-              className="text-sm text-gray-500 hover:text-red-600 transition-colors"
-            >
-              Limpiar filtros avanzados
-            </button>
-          )}
+
+          {/* Oferta + Limpiar */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={onSaleOnly}
+                onChange={(e) => setOnSaleOnly(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-brand-600"
+              />
+              <span className="text-sm font-semibold text-gray-700">Solo ofertas</span>
+            </label>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-600 transition-colors font-semibold"
+              >
+                <X className="w-3.5 h-3.5" />
+                Limpiar filtros
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-8">
-        <div className="flex flex-wrap gap-2 flex-1">
+      {/* Active filters summary (when panel is closed) */}
+      {!showFilters && hasActiveFilters && (
+        <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">
+          <span>Filtros activos</span>
           <button
-            onClick={() => setSelectedCategory('all')}
-            className={cn(
-              'px-4 py-2 rounded-full text-sm font-semibold transition-all',
-              selectedCategory === 'all'
-                ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
-                : 'bg-white border border-gray-200 text-gray-700 hover:border-brand-400'
-            )}
+            onClick={clearAllFilters}
+            className="text-brand-600 hover:text-red-600 font-semibold transition-colors"
           >
-            Todas
+            Limpiar
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.slug)}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-semibold transition-all',
-                selectedCategory === cat.slug
-                  ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:border-brand-400'
-              )}
-            >
-              {cat.name}
-            </button>
-          ))}
         </div>
-
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortOption)}
-          className="bg-white border border-gray-200 rounded-full px-4 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shrink-0"
-        >
-          <option value="recent">Más recientes</option>
-          <option value="price_asc">Menor precio</option>
-          <option value="price_desc">Mayor precio</option>
-        </select>
-      </div>
+      )}
 
       <p className="text-sm text-gray-500 mb-4">
         {filtered.length} {filtered.length === 1 ? 'producto' : 'productos'}
