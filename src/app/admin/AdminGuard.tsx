@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -11,18 +11,23 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
+      if (!data.user && !isLoginPage) {
         router.replace('/admin/login');
+      } else if (data.user && isLoginPage) {
+        router.replace('/admin');
       } else {
         setUser(data.user);
       }
       setLoading(false);
     });
-  }, [router]);
+  }, [router, isLoginPage]);
 
   if (loading) {
     return (
@@ -30,6 +35,10 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
         <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
       </div>
     );
+  }
+
+  if (isLoginPage) {
+    return <>{children}</>;
   }
 
   if (!user) return null;
