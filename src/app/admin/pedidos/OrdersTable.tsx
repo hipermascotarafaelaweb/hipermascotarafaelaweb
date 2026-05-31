@@ -17,13 +17,31 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
   const [filter, setFilter] = useState<'Todos' | Order['status']>('Todos');
   const supabase = createClient();
 
-  const updateStatus = async (id: number, status: Order['status']) => {
-    const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+  const updateStatus = async (id: number, newStatus: Order['status']) => {
+    const order = orders.find((o) => o.id === id);
+    if (!order) return;
+    const oldStatus = order.status;
+
+    // Update order status
+    const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', id);
     if (error) {
       alert('No se pudo actualizar el estado.');
       return;
     }
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+
+    // Deduct stock when confirming (Pendiente → Entregado)
+    if (oldStatus === 'Pendiente' && newStatus === 'Entregado') {
+      for (const item of order.items) {
+        await supabase.rpc('decrement_stock', {
+          product_id: item.product_id,
+          qty: item.qty,
+        }).then(({ error: stockError }) => {
+          if (stockError) console.error(`Error descontando stock de ${item.name}:`, stockError);
+        });
+      }
+    }
+
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
   };
 
   const deleteOrder = async (id: number) => {
