@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import WhatsAppFab from '@/components/WhatsAppFab';
+import MobileCartBar from '@/components/MobileCartBar';
 import Footer from '@/components/Footer';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -24,7 +25,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <main className="flex-1">{children}</main>
       <Footer />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-      <WhatsAppFab />
+      {!cartOpen && (
+        <>
+          <WhatsAppFab />
+          <MobileCartBar onOpen={() => setCartOpen(true)} />
+        </>
+      )}
     </>
   );
 }

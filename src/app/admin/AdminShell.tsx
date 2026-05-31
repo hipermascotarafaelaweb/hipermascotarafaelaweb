@@ -36,8 +36,8 @@ export default function AdminShell({
       {/* Sidebar desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 fixed h-full">
         <div className="p-5 border-b border-gray-100">
-          <Logo className="text-xl" icon />
-          <p className="text-xs text-gray-400 mt-2 font-medium">Panel de administración</p>
+          <Logo className="text-lg" stacked icon />
+          <p className="text-xs text-gray-400 mt-3 font-medium">Panel de administración</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -84,9 +84,9 @@ export default function AdminShell({
 
       {/* Header mobile */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 h-14">
-          <Logo className="text-base" />
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between px-4 h-14 gap-2">
+          <Logo className="text-base shrink-0" />
+          <div className="flex items-center gap-0.5 shrink-0">
             {navItems.map((item) => {
               const active = pathname === item.href;
               return (

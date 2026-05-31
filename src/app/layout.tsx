@@ -53,7 +53,7 @@ export default function RootLayout({
       lang="es"
       className={`${inter.variable} ${baloo.variable} ${itim.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white font-sans text-gray-800">
+      <body className="min-h-full flex flex-col bg-white font-sans text-gray-800 overflow-x-hidden">
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

@@ -8,7 +8,7 @@ import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/utils/format';
 import { cn } from '@/utils/cn';
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const outOfStock = product.stock <= 0;
@@ -21,7 +21,10 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:border-brand-200 transition-all duration-300 flex flex-col">
+    <div
+      className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:border-brand-200 transition-all duration-300 flex flex-col animate-fade-in-up"
+      style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}
+    >
       <div className="relative aspect-square bg-brand-50/50 overflow-hidden">
         {product.image_url ? (
           <Image
@@ -74,15 +77,15 @@ export default function ProductCard({ product }: { product: Product }) {
           </p>
         )}
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-gray-50">
-          <span className="text-xl font-extrabold text-gray-900">
+        <div className="mt-auto pt-3 border-t border-gray-50">
+          <span className="block text-lg sm:text-xl font-extrabold text-gray-900 mb-2.5">
             {formatPrice(product.price)}
           </span>
           <button
             onClick={handleAdd}
             disabled={outOfStock || added}
             className={cn(
-              'flex items-center gap-1.5 text-white text-sm font-bold px-3.5 py-2.5 rounded-xl transition-all duration-300 shrink-0',
+              'w-full flex items-center justify-center gap-1.5 text-white text-sm font-bold px-3 py-2.5 rounded-xl transition-all duration-300',
               added
                 ? 'bg-brand-500'
                 : outOfStock
@@ -93,8 +96,10 @@ export default function ProductCard({ product }: { product: Product }) {
             {added ? (
               <>
                 <Check className="w-4 h-4" />
-                Sumado
+                Sumado al pedido
               </>
+            ) : outOfStock ? (
+              'Sin stock'
             ) : (
               <>
                 <ShoppingCart className="w-4 h-4" />

@@ -13,6 +13,29 @@ interface LogoProps {
 // Verde lima exacto del lettering de la tarjeta.
 const LIME = '#8dc63f';
 
+// Patrón determinístico de "bailoteo" del marcador (estable en SSR/CSR).
+const ROT = [-3, 2, -2, 3, -1, 2, -3, 1, 3, -2, 2, -1.5];
+const DY = [0, 1, -1, 0.5, 1, -0.5, 0, 1, -1, 0.5, 1, -0.5];
+
+function Word({ text, color }: { text: string; color: string }) {
+  return (
+    <span className="inline-flex">
+      {text.split('').map((ch, i) => (
+        <span
+          key={i}
+          className="inline-block"
+          style={{
+            color,
+            transform: `rotate(${ROT[i % ROT.length]}deg) translateY(${DY[i % DY.length]}px)`,
+          }}
+        >
+          {ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function Paw({ className, color }: { className?: string; color: string }) {
   return (
     <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
@@ -31,7 +54,8 @@ export default function Logo({
   icon = false,
   light = false,
 }: LogoProps) {
-  const textColor = light ? '#a7d65f' : LIME;
+  const top = light ? '#a7d65f' : LIME;
+  const bottom = light ? '#ffffff' : LIME;
 
   return (
     <span
@@ -39,33 +63,28 @@ export default function Logo({
         'inline-flex items-center gap-2 font-wordmark leading-none select-none',
         className
       )}
+      aria-label="Hipermascota Rafaela"
     >
-      {icon && (
-        <Paw className="h-[1.05em] w-[1.05em] shrink-0" color={light ? '#a7d65f' : LIME} />
-      )}
+      {icon && <Paw className="h-[1.05em] w-[1.05em] shrink-0" color={top} />}
       <span
         className={cn('inline-flex', stacked ? 'flex-col items-center leading-[0.9]' : 'items-baseline')}
+        aria-hidden="true"
       >
-        <span style={{ color: textColor }} className="tracking-wide">
-          Hipermascota
-        </span>
-        <span
-          style={{ color: light ? '#ffffff' : LIME }}
-          className={cn('relative tracking-wide', stacked ? 'mt-0.5' : 'ml-[0.35em]')}
-        >
-          Rafaela
+        <Word text="Hipermascota" color={top} />
+        <span className={cn('relative', stacked ? 'mt-1' : 'ml-[0.35em]')}>
+          <Word text="Rafaela" color={bottom} />
           {stacked && (
             <svg
-              className="absolute left-0 -bottom-[0.22em] w-full"
+              className="absolute left-0 -bottom-[0.24em] w-full"
               viewBox="0 0 120 8"
               fill="none"
               preserveAspectRatio="none"
               aria-hidden="true"
             >
               <path
-                d="M3 5.2C30 2 90 2 117 5.2"
-                stroke={light ? '#ffffff' : LIME}
-                strokeWidth="3"
+                d="M3 5C30 1.5 90 1.5 117 5"
+                stroke={bottom}
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
             </svg>
