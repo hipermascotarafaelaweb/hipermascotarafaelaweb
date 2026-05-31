@@ -1,4 +1,5 @@
 import type { CartItem, CustomerInput } from '@/types';
+import { effectivePrice } from '@/utils/format';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493492330291';
 
@@ -9,12 +10,13 @@ function formatNumber(price: number): string {
 export function generateWhatsAppLink(
   items: CartItem[],
   total: number,
-  customer?: CustomerInput
+  customer?: CustomerInput,
+  couponDiscount?: number
 ): string {
   const itemLines = items
     .map(
       (item) =>
-        `• ${item.quantity}x ${item.product.name} ($${formatNumber(item.product.price)} c/u)`
+        `• ${item.quantity}x ${item.product.name} ($${formatNumber(effectivePrice(item.product))} c/u)`
     )
     .join('\n');
 
@@ -28,12 +30,15 @@ Teléfono: ${customer.phone}
 📍 Dirección de envío: ${customer.address}`
     : '';
 
+  const discount = couponDiscount ? `\n🎉 Descuento: -$${formatNumber(couponDiscount)}` : '';
+  const finalTotal = couponDiscount ? total - couponDiscount : total;
+
   const message = `🐾 ¡Hola Hipermascota! Quiero realizar el siguiente pedido:
 
 -----------------------------------------
 ${itemLines}
 -----------------------------------------
-💰 Total: $${formatNumber(total)}
+💰 Total: $${formatNumber(finalTotal)}${discount}
 🚚 Envío a domicilio: GRATIS${datosCliente}
 
 ¿Me confirman la disponibilidad para coordinar el envío? ¡Muchas gracias!`;

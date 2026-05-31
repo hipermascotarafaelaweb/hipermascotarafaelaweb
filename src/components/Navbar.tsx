@@ -44,27 +44,26 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
             <Logo className="text-lg sm:text-2xl whitespace-nowrap" />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {links.map((link) => {
-              const active = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-semibold transition-colors',
-                    active
-                      ? 'bg-brand-50 text-brand-700'
-                      : 'text-gray-600 hover:text-brand-700 hover:bg-brand-50/60'
-                  )}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 ml-auto">
+            <nav className="hidden md:flex items-center gap-1">
+              {links.map((link) => {
+                const active = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      'px-4 py-2 rounded-full text-sm font-semibold transition-colors',
+                      active
+                        ? 'bg-brand-50 text-brand-700'
+                        : 'text-gray-600 hover:text-brand-700 hover:bg-brand-50/60'
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
             <button
               onClick={onCartOpen}
               className="relative p-2.5 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors"

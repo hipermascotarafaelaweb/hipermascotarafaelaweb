@@ -6,11 +6,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowLeft, ShoppingCart, Check, Minus, Plus, MessageCircle,
-  PawPrint, Truck, ShieldCheck, Loader2, Star,
+  PawPrint, Truck, ShieldCheck, Loader2, Star, Tag,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useCartStore } from '@/store/cart';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import type { Product } from '@/types';
 import ProductCard from '@/components/ProductCard';
@@ -25,6 +25,7 @@ export default function ProductoDetail() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -80,7 +81,13 @@ export default function ProductoDetail() {
   }
 
   const outOfStock = product.stock <= 0;
-  const consultMsg = `🐾 ¡Hola Hipermascota! Quería consultar por: ${product.name} (${formatPrice(product.price)}).`;
+  const onSale = hasDiscount(product);
+  // Galería: foto principal + adicionales, sin duplicados ni vacíos.
+  const gallery = [product.image_url, ...(product.images ?? [])].filter(
+    (src, i, arr): src is string => !!src && arr.indexOf(src) === i
+  );
+  const mainImg = gallery[Math.min(activeImg, gallery.length - 1)];
+  const consultMsg = `🐾 ¡Hola Hipermascota! Quería consultar por: ${product.name} (${formatPrice(effectivePrice(product))}).`;
 
   const handleAdd = () => {
     addItem(product, qty);
@@ -99,26 +106,53 @@ export default function ProductoDetail() {
       </Link>
 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        {/* Imagen */}
-        <div className="relative aspect-square rounded-3xl bg-brand-50/50 overflow-hidden border border-gray-100">
-          {product.image_url ? (
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-brand-200">
-              <PawPrint className="w-24 h-24" />
+        {/* Galería */}
+        <div>
+          <div className="relative aspect-square rounded-3xl bg-brand-50/50 overflow-hidden border border-gray-100">
+            {mainImg ? (
+              <Image
+                src={mainImg}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-brand-200">
+                <PawPrint className="w-24 h-24" />
+              </div>
+            )}
+            <div className="absolute top-4 left-4 flex flex-col gap-2">
+              {onSale && !outOfStock && (
+                <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                  <Tag className="w-3.5 h-3.5 fill-current" /> -{discountPercent(product)}% OFF
+                </span>
+              )}
+              {product.is_featured && !outOfStock && (
+                <span className="bg-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-current" /> Destacado
+                </span>
+              )}
             </div>
-          )}
-          {product.is_featured && !outOfStock && (
-            <span className="absolute top-4 left-4 bg-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-current" /> Destacado
-            </span>
+          </div>
+
+          {gallery.length > 1 && (
+            <div className="grid grid-cols-5 gap-2.5 mt-3">
+              {gallery.map((src, i) => (
+                <button
+                  key={src}
+                  onClick={() => setActiveImg(i)}
+                  className={cn(
+                    'relative aspect-square rounded-xl overflow-hidden border-2 transition-colors',
+                    i === activeImg ? 'border-brand-500' : 'border-transparent hover:border-brand-200'
+                  )}
+                  aria-label={`Ver foto ${i + 1}`}
+                >
+                  <Image src={src} alt="" fill className="object-cover" sizes="80px" />
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -135,9 +169,19 @@ export default function ProductoDetail() {
           <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">
             {product.name}
           </h1>
-          <p className="text-3xl font-extrabold text-gray-900 mb-4">
-            {formatPrice(product.price)}
-          </p>
+          <div className="flex items-baseline gap-3 mb-4">
+            <p className={cn('text-3xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
+              {formatPrice(effectivePrice(product))}
+            </p>
+            {onSale && (
+              <>
+                <span className="text-xl text-gray-400 line-through">{formatPrice(product.price)}</span>
+                <span className="bg-red-100 text-red-700 text-sm font-bold px-2 py-0.5 rounded-lg">
+                  -{discountPercent(product)}%
+                </span>
+              </>
+            )}
+          </div>
 
           {outOfStock ? (
             <span className="inline-flex w-fit items-center bg-red-50 text-red-600 text-sm font-semibold px-3 py-1.5 rounded-full mb-4">

@@ -3,6 +3,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem, Product } from '@/types';
+import { effectivePrice } from '@/utils/format';
+
+// Carrito local + syncronización opcional con Supabase para multi-device
+let syncTimer: NodeJS.Timeout | null = null;
 
 interface CartState {
   items: CartItem[];
@@ -64,7 +68,7 @@ export const useCartStore = create<CartState>()(
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
       totalPrice: () =>
-        get().items.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+        get().items.reduce((sum, i) => sum + effectivePrice(i.product) * i.quantity, 0),
     }),
     { name: 'hipermascota-cart' }
   )

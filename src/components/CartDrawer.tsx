@@ -3,17 +3,18 @@
 import { useState } from 'react';
 import {
   X, Minus, Plus, Trash2, MessageCircle, ShoppingBag, PawPrint,
-  ArrowLeft, ArrowRight, Truck,
+  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper, Ticket, Check, AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { useCustomerStore } from '@/store/customer';
 import { generateWhatsAppLink } from '@/utils/whatsapp';
 import { createClient } from '@/utils/supabase/client';
-import { formatPrice } from '@/utils/format';
-import type { CustomerInput } from '@/types';
+import { formatPrice, effectivePrice, hasDiscount } from '@/utils/format';
+import { useToast } from '@/hooks/useToast';
+import type { CustomerInput, Coupon } from '@/types';
 
-type Step = 'cart' | 'form';
+type Step = 'cart' | 'form' | 'done';
 
 export default function CartDrawer({
   open,
@@ -31,17 +32,68 @@ export default function CartDrawer({
   const customer = useCustomerStore((s) => s.data);
   const setCustomer = useCustomerStore((s) => s.setData);
 
+  const toast = useToast();
+
   const [step, setStep] = useState<Step>('cart');
   const [sending, setSending] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInput, string>>>({});
+  const [sentLink, setSentLink] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [coupon, setCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const total = totalPrice();
+  const couponDiscount = coupon ? (total * coupon.discount_percent) / 100 : 0;
+  const finalTotal = total - couponDiscount;
+
+  // Cierra el panel y, si el pedido ya se envió, vuelve al estado inicial.
+  const handleClose = () => {
+    onClose();
+    if (step === 'done') setStep('cart');
+  };
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Ingresá un código.');
+      return;
+    }
+    setApplyingCoupon(true);
+    setCouponError('');
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', couponCode.toUpperCase())
+      .single();
+    setApplyingCoupon(false);
+    if (error || !data) {
+      setCouponError('Código inválido.');
+      return;
+    }
+    const c = data as Coupon;
+    if (!c.active) {
+      setCouponError('Cupón inactivo.');
+      return;
+    }
+    if (c.valid_until && new Date(c.valid_until) < new Date()) {
+      setCouponError('Cupón expirado.');
+      return;
+    }
+    if (c.max_uses && c.uses_count >= c.max_uses) {
+      setCouponError('Cupón agotado.');
+      return;
+    }
+    setCoupon(c);
+    setCouponCode('');
+  };
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof CustomerInput, string>> = {};
     if (!customer.first_name.trim()) e.first_name = 'Ingresá tu nombre';
     if (!customer.last_name.trim()) e.last_name = 'Ingresá tu apellido';
-    if (!/^\d{7,9}$/.test(customer.dni.trim())) e.dni = 'DNI inválido (7 u 8 dígitos)';
+    const dniClean = customer.dni.replace(/\D/g, '');
+    if (!/^\d{7,9}$/.test(dniClean)) e.dni = 'DNI inválido (7 a 9 dígitos)';
     if (!/^[\d\s+()-]{6,}$/.test(customer.phone.trim())) e.phone = 'Teléfono inválido';
     if (customer.address.trim().length < 6) e.address = 'Ingresá la dirección de envío';
     setErrors(e);
@@ -60,44 +112,37 @@ export default function CartDrawer({
       address: customer.address.trim(),
     };
 
-    // Guardar cliente y registrar pedido (best-effort, no bloquea el checkout).
     try {
-      const supabase = createClient();
-      await supabase.from('customers').upsert(
-        {
-          dni: clean.dni,
-          first_name: clean.first_name,
-          last_name: clean.last_name,
-          phone: clean.phone,
-          address: clean.address,
-        },
-        { onConflict: 'dni', ignoreDuplicates: true }
-      );
-
-      await supabase.from('orders').insert({
-        customer_name: `${clean.first_name} ${clean.last_name}`,
-        customer_dni: clean.dni,
-        customer_phone: clean.phone,
-        customer_address: clean.address,
-        items: items.map((i) => ({
-          product_id: i.product.id,
-          name: i.product.name,
-          qty: i.quantity,
-          price: i.product.price,
-        })),
-        total_amount: total,
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          customer: clean,
+          coupon,
+          finalTotal,
+          couponDiscount,
+        }),
       });
-    } catch {
-      // Si falla el registro, igual seguimos al pedido por WhatsApp.
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create order');
+      }
+
+      const link = generateWhatsAppLink(items, finalTotal, clean, couponDiscount);
+      window.open(link, '_blank');
+
+      clearCart();
+      setSentLink(link);
+      setStep('done');
+      toast.success('Pedido creado exitosamente');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al crear el pedido';
+      toast.error(message);
+    } finally {
+      setSending(false);
     }
-
-    const link = generateWhatsAppLink(items, total, clean);
-    window.open(link, '_blank');
-
-    clearCart();
-    setSending(false);
-    setStep('cart');
-    onClose();
   };
 
   const field = (
@@ -125,7 +170,7 @@ export default function CartDrawer({
         className={`fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       <aside
@@ -150,11 +195,11 @@ export default function CartDrawer({
                 <ShoppingBag className="w-5 h-5 text-brand-600" />
               )}
               <h2 className="text-lg font-extrabold text-gray-900">
-                {step === 'form' ? 'Tus datos' : 'Tu pedido'}
+                {step === 'form' ? 'Tus datos' : step === 'done' ? '¡Listo!' : 'Tu pedido'}
               </h2>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
               aria-label="Cerrar carrito"
             >
@@ -162,7 +207,35 @@ export default function CartDrawer({
             </button>
           </div>
 
-          {items.length === 0 ? (
+          {step === 'done' ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-11 h-11 text-brand-600" />
+              </div>
+              <h3 className="text-xl font-extrabold text-gray-900 mb-1.5 flex items-center gap-2">
+                ¡Gracias por tu pedido! <PartyPopper className="w-5 h-5 text-brand-600" />
+              </h3>
+              <p className="text-gray-500 text-sm max-w-xs mb-6">
+                Te abrimos WhatsApp para confirmar la disponibilidad y coordinar el{' '}
+                <strong>envío gratis</strong>. Si no se abrió, tocá el botón de abajo.
+              </p>
+              <a
+                href={sentLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#1ebe5a] text-white font-bold py-3.5 px-4 rounded-2xl transition-colors mb-3"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Abrir WhatsApp de nuevo
+              </a>
+              <button
+                onClick={handleClose}
+                className="w-full text-sm font-semibold text-gray-500 hover:text-brand-700 transition-colors py-2"
+              >
+                Seguir comprando
+              </button>
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-8 text-center">
               <div>
                 <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -182,60 +255,123 @@ export default function CartDrawer({
           ) : step === 'cart' ? (
             <>
               <ul className="flex-1 overflow-y-auto p-4 space-y-3">
-                {items.map((item) => (
-                  <li key={item.product.id} className="flex gap-3 bg-gray-50 rounded-2xl p-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
-                        {item.product.name}
-                      </h3>
-                      <p className="text-brand-700 font-bold text-sm mt-0.5">
-                        {formatPrice(item.product.price)}
-                        <span className="text-gray-400 font-normal"> c/u</span>
-                      </p>
-                      <div className="flex items-center gap-2 mt-3">
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
-                          aria-label="Reducir cantidad"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="text-sm font-bold w-7 text-center tabular-nums">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
-                          aria-label="Aumentar cantidad"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
+                {items.map((item) => {
+                  const lowStock = item.product.stock > 0 && item.product.stock <= 3;
+                  return (
+                    <li key={item.product.id} className="flex gap-3 bg-gray-50 rounded-2xl p-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
+                          {item.product.name}
+                        </h3>
+                        <p className="text-brand-700 font-bold text-sm mt-0.5">
+                          {formatPrice(effectivePrice(item.product))}
+                          {hasDiscount(item.product) && (
+                            <span className="text-gray-400 font-normal line-through ml-1.5">
+                              {formatPrice(item.product.price)}
+                            </span>
+                          )}
+                          <span className="text-gray-400 font-normal"> c/u</span>
+                        </p>
+                        {lowStock && (
+                          <div className="flex items-center gap-1.5 text-xs text-amber-600 mt-2">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            Solo {item.product.stock} en stock
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+                            aria-label="Reducir cantidad"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="text-sm font-bold w-7 text-center tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+                            aria-label="Aumentar cantidad"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-col items-end justify-between">
-                      <button
-                        onClick={() => removeItem(item.product.id)}
-                        className="text-gray-300 hover:text-red-500 transition-colors"
-                        aria-label="Eliminar producto"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <span className="text-sm font-extrabold text-gray-900">
-                        {formatPrice(item.product.price * item.quantity)}
-                      </span>
-                    </div>
-                  </li>
-                ))}
+                      <div className="flex flex-col items-end justify-between">
+                        <button
+                          onClick={() => removeItem(item.product.id)}
+                          className="text-gray-300 hover:text-red-500 transition-colors"
+                          aria-label="Eliminar producto"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <span className="text-sm font-extrabold text-gray-900">
+                          {formatPrice(effectivePrice(item.product) * item.quantity)}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               <div className="border-t border-gray-100 p-5 space-y-4 bg-gray-50/80">
+                {/* Cupón */}
+                <div className="flex gap-2">
+                  <input
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value);
+                      setCouponError('');
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && applyCoupon()}
+                    placeholder="Código cupón"
+                    className={`flex-1 px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+                      couponError ? 'border-red-400' : 'border-gray-200'
+                    }`}
+                  />
+                  <button
+                    onClick={applyCoupon}
+                    disabled={applyingCoupon}
+                    className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:bg-gray-300 text-white font-bold rounded-xl text-sm transition-colors"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+                {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+                {coupon && (
+                  <div className="flex items-center gap-2 bg-green-50 text-green-700 rounded-xl px-3 py-2 text-sm font-semibold">
+                    <Check className="w-4 h-4" />
+                    Cupón {coupon.code} aplicado (-{coupon.discount_percent}%)
+                    <button
+                      onClick={() => setCoupon(null)}
+                      className="ml-auto text-green-600 hover:text-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2 text-brand-700 bg-brand-50 rounded-xl px-3 py-2 text-sm font-semibold">
                   <Truck className="w-4 h-4" />
                   Envío a domicilio gratis
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 font-semibold">Total</span>
-                  <span className="text-2xl font-extrabold text-gray-900">{formatPrice(total)}</span>
+
+                <div className="space-y-2 pt-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(total)}</span>
+                  </div>
+                  {coupon && (
+                    <div className="flex justify-between text-sm text-green-600 font-semibold">
+                      <span>Descuento ({coupon.discount_percent}%)</span>
+                      <span>-{formatPrice(couponDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span className="text-gray-600 font-semibold">Total</span>
+                    <span className="text-2xl font-extrabold text-gray-900">{formatPrice(finalTotal)}</span>
+                  </div>
                 </div>
                 <button
                   onClick={() => setStep('form')}
@@ -268,12 +404,31 @@ export default function CartDrawer({
                 {field('address', 'Dirección de envío', {
                   placeholder: 'Calle, número, barrio, ciudad',
                 })}
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Tus datos se usan únicamente para coordinar la entrega.{' '}
+                  <Link href="/privacidad" onClick={onClose} className="text-brand-600 hover:underline font-semibold">
+                    Aviso de privacidad
+                  </Link>
+                  .
+                </p>
               </div>
 
               <div className="border-t border-gray-100 p-5 space-y-3 bg-gray-50/80">
+                {coupon && (
+                  <div className="space-y-2 pb-3 border-b border-gray-200">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-600 font-semibold">
+                      <span>{coupon.code} (-{coupon.discount_percent}%)</span>
+                      <span>-{formatPrice(couponDiscount)}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-semibold">Total</span>
-                  <span className="text-xl font-extrabold text-gray-900">{formatPrice(total)}</span>
+                  <span className="text-xl font-extrabold text-gray-900">{formatPrice(finalTotal)}</span>
                 </div>
                 <button
                   onClick={handleConfirm}
