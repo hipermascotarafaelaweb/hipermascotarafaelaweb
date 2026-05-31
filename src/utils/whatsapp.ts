@@ -11,7 +11,8 @@ export function generateWhatsAppLink(
   items: CartItem[],
   total: number,
   customer?: CustomerInput,
-  couponDiscount?: number
+  couponDiscount?: number,
+  couponCode?: string
 ): string {
   const itemLines = items
     .map(
@@ -30,15 +31,20 @@ Teléfono: ${customer.phone}
 📍 Dirección de envío: ${customer.address}`
     : '';
 
-  const discount = couponDiscount ? `\n🎉 Descuento: -$${formatNumber(couponDiscount)}` : '';
-  const finalTotal = couponDiscount ? total - couponDiscount : total;
+  const subtotal = couponDiscount ? total + couponDiscount : total;
+  const discountLine = couponDiscount && couponCode
+    ? `\n🎟️ Cupón ${couponCode}: -$${formatNumber(couponDiscount)}`
+    : couponDiscount
+    ? `\n🎟️ Descuento: -$${formatNumber(couponDiscount)}`
+    : '';
+  const subtotalLine = couponDiscount ? `\n💵 Subtotal: $${formatNumber(subtotal)}` : '';
 
   const message = `🐾 ¡Hola Hipermascota! Quiero realizar el siguiente pedido:
 
 -----------------------------------------
 ${itemLines}
------------------------------------------
-💰 Total: $${formatNumber(finalTotal)}${discount}
+-----------------------------------------${subtotalLine}${discountLine}
+💰 *Total: $${formatNumber(total)}*
 🚚 Envío a domicilio: GRATIS${datosCliente}
 
 ¿Me confirman la disponibilidad para coordinar el envío? ¡Muchas gracias!`;

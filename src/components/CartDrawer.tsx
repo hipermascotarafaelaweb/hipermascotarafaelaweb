@@ -152,7 +152,7 @@ export default function CartDrawer({
         throw new Error(data.error || 'Failed to create order');
       }
 
-      const link = generateWhatsAppLink(items, finalTotal, clean, couponDiscount);
+      const link = generateWhatsAppLink(items, finalTotal, clean, couponDiscount, coupon?.code);
       window.open(link, '_blank');
 
       clearCart();
