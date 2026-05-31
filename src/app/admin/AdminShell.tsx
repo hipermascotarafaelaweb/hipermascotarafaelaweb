@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Package, ClipboardList, Users, LogOut, ExternalLink, Tag } from 'lucide-react';
+import { Package, ClipboardList, Users, LogOut, ExternalLink, Tag, BarChart3, Ticket } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import Logo from '@/components/Logo';
@@ -11,6 +11,8 @@ import { cn } from '@/utils/cn';
 const navItems = [
   { href: '/admin', label: 'Productos', icon: Package },
   { href: '/admin/categorias', label: 'Categorías', icon: Tag },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: BarChart3 },
+  { href: '/admin/cupones', label: 'Cupones', icon: Ticket },
   { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardList },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
 ];

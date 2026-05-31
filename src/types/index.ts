@@ -65,6 +65,20 @@ export interface Order {
   customer_address: string | null;
   items: OrderItem[];
   total_amount: number;
+  coupon_code: string | null;
+  coupon_discount: number;
   status: 'Pendiente' | 'Entregado' | 'Cancelado';
+  created_at: string;
+}
+
+export interface Coupon {
+  id: number;
+  code: string;
+  discount_percent: number;
+  max_uses: number | null;
+  uses_count: number;
+  valid_from: string;
+  valid_until: string | null;
+  active: boolean;
   created_at: string;
 }
