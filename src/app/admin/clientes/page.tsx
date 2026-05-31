@@ -1,10 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, Users, Phone, MapPin, CreditCard, Search } from 'lucide-react';
+import { Loader2, Users, Phone, MapPin, CreditCard, Search, Download } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { Customer } from '@/types';
 import { formatDate } from '@/utils/format';
+
+function downloadCSV(customers: Customer[]) {
+  const headers = ['DNI', 'Nombre', 'Apellido', 'Teléfono', 'Dirección', 'Registrado'];
+  const rows = customers.map((c) => [
+    c.dni,
+    c.first_name,
+    c.last_name,
+    c.phone,
+    c.address || '',
+    formatDate(c.created_at),
+  ]);
+  const csv = [headers, ...rows].map((r) => r.map((cell) => `"${cell}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `clientes-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+}
 
 export default function ClientesPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -57,17 +75,57 @@ export default function ClientesPage() {
         </div>
       ) : (
         <>
-          <div className="relative mb-5 max-w-sm">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, DNI o teléfono…"
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nombre, DNI o teléfono…"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <button
+              onClick={() => downloadCSV(filtered)}
+              className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-colors shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              Exportar CSV
+            </button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-500">Nombre</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-500">DNI</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-500 hidden sm:table-cell">Teléfono</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-500 hidden md:table-cell">Dirección</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-500 hidden lg:table-cell">Registrado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filtered.map((c) => (
+                    <tr key={c.id} className="hover:bg-gray-50/60">
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {c.first_name} {c.last_name}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-gray-600">{c.dni}</td>
+                      <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{c.phone}</td>
+                      <td className="px-4 py-3 text-gray-600 hidden md:table-cell truncate">{c.address || '—'}</td>
+                      <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
+                        {formatDate(c.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 hidden">
             {filtered.map((c) => (
               <div key={c.id} className="bg-white rounded-2xl border border-gray-100 p-5">
                 <div className="flex items-center gap-3 mb-3">

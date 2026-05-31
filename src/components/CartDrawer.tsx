@@ -48,7 +48,8 @@ export default function CartDrawer({
     const e: Partial<Record<keyof CustomerInput, string>> = {};
     if (!customer.first_name.trim()) e.first_name = 'Ingresá tu nombre';
     if (!customer.last_name.trim()) e.last_name = 'Ingresá tu apellido';
-    if (!/^\d{7,9}$/.test(customer.dni.trim())) e.dni = 'DNI inválido (7 u 8 dígitos)';
+    const dniClean = customer.dni.replace(/\D/g, '');
+    if (!/^\d{7,9}$/.test(dniClean)) e.dni = 'DNI inválido (7 a 9 dígitos)';
     if (!/^[\d\s+()-]{6,}$/.test(customer.phone.trim())) e.phone = 'Teléfono inválido';
     if (customer.address.trim().length < 6) e.address = 'Ingresá la dirección de envío';
     setErrors(e);
