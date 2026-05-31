@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     }));
 
     // Create the order
-    const { data: orderData, error: orderError } = await supabase
+    const { error: orderError } = await supabase
       .from('orders')
       .insert({
         customer_name: `${customer.first_name} ${customer.last_name}`,
@@ -138,21 +138,12 @@ export async function POST(request: NextRequest) {
         coupon_code: coupon?.code || null,
         coupon_discount: couponDiscount || 0,
         status: 'Pendiente',
-      })
-      .select()
-      .single();
+      });
 
     if (orderError) {
       console.error('Order creation error:', JSON.stringify(orderError));
       return NextResponse.json(
         { error: `Error al crear el pedido: ${orderError.message}` },
-        { status: 500 }
-      );
-    }
-
-    if (!orderData) {
-      return NextResponse.json(
-        { error: 'No se pudo crear el pedido' },
         { status: 500 }
       );
     }
@@ -177,11 +168,8 @@ export async function POST(request: NextRequest) {
         .eq('id', coupon.id);
     }
 
-    // Send email notification (best-effort, doesn't block response)
-    sendOrderEmail(orderData);
-
     return NextResponse.json(
-      { orderId: orderData.id, success: true },
+      { success: true },
       { status: 201 }
     );
   } catch (error) {
