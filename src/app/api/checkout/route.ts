@@ -103,7 +103,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const { createClient: createServiceClient } = await import('@supabase/supabase-js');
+    const supabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+
+    const orderItems = items.map((i: CartItem) => ({
+      product_id: i.product.id,
+      name: i.product.name,
+      qty: i.quantity,
+      price: i.product.price,
+    }));
 
     // Create the order
     const { data: orderData, error: orderError } = await supabase
@@ -113,12 +124,7 @@ export async function POST(request: NextRequest) {
         customer_dni: customer.dni,
         customer_phone: customer.phone,
         customer_address: customer.address,
-        items: items.map((i: CartItem) => ({
-          product_id: i.product.id,
-          name: i.product.name,
-          qty: i.quantity,
-          price: i.product.price,
-        })),
+        items: orderItems,
         total_amount: finalTotal,
         coupon_code: coupon?.code || null,
         coupon_discount: couponDiscount || 0,
