@@ -9,8 +9,7 @@ const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : request.ip || 'unknown';
-  return ip;
+  return forwarded?.split(',')[0].trim() || 'unknown';
 }
 
 function checkRateLimit(ip: string): boolean {
