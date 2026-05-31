@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Truck, ShieldCheck, MessageCircle, PawPrint } from 'lucide-react';
+import { ArrowRight, Truck, ShieldCheck, MessageCircle, PawPrint, ShoppingBag } from 'lucide-react';
 import FeaturedProducts from '@/components/FeaturedProducts';
 
 const WHATSAPP = '5493492330291';
@@ -28,7 +28,7 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-            Explorá el catálogo, armá tu pedido y confirmalo directo por WhatsApp.
+            Explorá el catálogo, armá tu pedido y coordinamos la entrega.
             Rápido, fácil y con atención personalizada.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -73,7 +73,7 @@ export default function HomePage() {
               {
                 icon: Truck,
                 title: 'Envío gratis',
-                text: 'Te lo llevamos a domicilio sin costo. Coordinamos por WhatsApp.',
+                text: 'Te lo llevamos a domicilio sin costo, a toda Rafaela.',
               },
               {
                 icon: ShieldCheck,
@@ -81,9 +81,9 @@ export default function HomePage() {
                 text: 'Accesorios resistentes y seguros, elegidos uno por uno.',
               },
               {
-                icon: MessageCircle,
-                title: 'Compra por WhatsApp',
-                text: 'Sin registros ni pasarelas. Pedí y coordiná al instante.',
+                icon: ShoppingBag,
+                title: 'Compra simple',
+                text: 'Sin registros ni pasarelas. Elegí, pedí y listo.',
               },
             ].map((b) => (
               <div
@@ -111,24 +111,13 @@ export default function HomePage() {
           <p className="text-brand-50 text-lg mb-8 max-w-xl mx-auto">
             Explorá el catálogo completo y armá tu pedido. ¡Te esperamos!
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/productos"
-              className="inline-flex items-center gap-2 bg-white text-brand-700 font-bold px-8 py-4 rounded-2xl text-lg hover:bg-brand-50 transition-colors"
-            >
-              Ver catálogo
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <a
-              href={`https://wa.me/${WHATSAPP}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border-2 border-white/40 text-white font-bold px-8 py-4 rounded-2xl text-lg hover:bg-white/10 transition-colors"
-            >
-              <MessageCircle className="w-5 h-5" />
-              Escribinos por WhatsApp
-            </a>
-          </div>
+          <Link
+            href="/productos"
+            className="inline-flex items-center gap-2 bg-white text-brand-700 font-bold px-8 py-4 rounded-2xl text-lg hover:bg-brand-50 transition-colors"
+          >
+            Ver catálogo
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </div>
       </section>
     </>

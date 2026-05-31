@@ -1,4 +1,4 @@
-import { MapPin, Clock, Phone, MessageCircle } from 'lucide-react';
+import { MapPin, Clock, Phone } from 'lucide-react';
 import Link from 'next/link';
 import Logo from './Logo';
 
@@ -12,18 +12,9 @@ export default function Footer() {
           <div className="md:col-span-1">
             <Logo className="text-2xl" stacked light icon />
             <p className="text-sm text-gray-400 mt-4 leading-relaxed">
-              Accesorios para mascotas en Rafaela, Santa Fe. Calidad y atención
-              personalizada por WhatsApp.
+              Accesorios para perros y gatos en Rafaela, Santa Fe. Calidad y
+              atención personalizada, con envío gratis a domicilio.
             </p>
-            <a
-              href={`https://wa.me/${WHATSAPP}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-5 bg-[#25D366] hover:bg-[#1ebe5a] text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Escribinos por WhatsApp
-            </a>
           </div>
 
           <div>

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Baloo_2, Chewy } from 'next/font/google';
+import { Inter, Baloo_2, Itim } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 
@@ -14,11 +14,11 @@ const baloo = Baloo_2({
   variable: '--font-baloo',
 });
 
-// Tipografía del logotipo: trazo redondeado y dibujado a mano, como la tarjeta.
-const chewy = Chewy({
+// Tipografía del logotipo: trazo de marcador neto y redondeado, como la tarjeta.
+const itim = Itim({
   subsets: ['latin'],
   weight: '400',
-  variable: '--font-chewy',
+  variable: '--font-itim',
 });
 
 export const metadata: Metadata = {
@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${inter.variable} ${baloo.variable} h-full antialiased`}
+      className={`${inter.variable} ${baloo.variable} ${itim.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white font-sans text-gray-800">
         <ClientLayout>{children}</ClientLayout>

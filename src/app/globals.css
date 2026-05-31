@@ -4,7 +4,7 @@
   /* Tipografías */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-logo: var(--font-baloo), ui-rounded, "Segoe UI", sans-serif;
-  --font-wordmark: var(--font-chewy), var(--font-baloo), "Comic Sans MS", cursive;
+  --font-wordmark: var(--font-itim), var(--font-baloo), "Comic Sans MS", cursive;
 
   /* Paleta de marca Hipermascota (verde lima de la tarjeta) */
   --color-brand-50: #f4faea;
