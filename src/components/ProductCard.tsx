@@ -1,63 +1,71 @@
 'use client';
 
 import Image from 'next/image';
-import { ShoppingCart, PackageX, Check } from 'lucide-react';
+import { ShoppingCart, PawPrint, Check } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@/types';
 import { useCartStore } from '@/store/cart';
-
-function formatPrice(price: number): string {
-  return price.toLocaleString('es-AR', { minimumFractionDigits: 0 });
-}
+import { formatPrice } from '@/utils/format';
+import { cn } from '@/utils/cn';
 
 export default function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const outOfStock = product.stock <= 0;
+  const lowStock = product.stock > 0 && product.stock <= 5;
 
   const handleAdd = () => {
     addItem(product);
     setAdded(true);
-    setTimeout(() => setAdded(false), 1200);
+    setTimeout(() => setAdded(false), 1300);
   };
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
-      <div className="relative aspect-square bg-gray-50 overflow-hidden">
+    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:border-brand-200 transition-all duration-300 flex flex-col">
+      <div className="relative aspect-square bg-brand-50/50 overflow-hidden">
         {product.image_url ? (
           <Image
             src={product.image_url}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-200">
-            <PackageX className="w-16 h-16" />
+          <div className="w-full h-full flex items-center justify-center text-brand-200">
+            <PawPrint className="w-16 h-16" />
           </div>
         )}
+
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          {product.is_featured && !outOfStock && (
+            <span className="bg-brand-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+              ⭐ Destacado
+            </span>
+          )}
+          {lowStock && (
+            <span className="bg-amber-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+              ¡Últimas {product.stock}!
+            </span>
+          )}
+        </div>
+
         {outOfStock && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="bg-red-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full">
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 rounded-full">
               Sin stock
             </span>
           </div>
-        )}
-        {product.is_featured && !outOfStock && (
-          <span className="absolute top-3 left-3 bg-green-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-            Destacado
-          </span>
         )}
       </div>
 
       <div className="p-4 flex flex-col flex-1">
         {product.category && (
-          <span className="text-xs text-green-700 font-semibold uppercase tracking-wider mb-1">
+          <span className="text-[11px] text-brand-600 font-bold uppercase tracking-wider mb-1">
             {product.category.name}
           </span>
         )}
-        <h3 className="font-bold text-gray-900 line-clamp-2 mb-1">
+        <h3 className="font-bold text-gray-900 leading-snug line-clamp-2 mb-1">
           {product.name}
         </h3>
         {product.description && (
@@ -65,25 +73,27 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.description}
           </p>
         )}
-        <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-50">
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-gray-50">
           <span className="text-xl font-extrabold text-gray-900">
-            ${formatPrice(product.price)}
+            {formatPrice(product.price)}
           </span>
           <button
             onClick={handleAdd}
             disabled={outOfStock || added}
-            className={`flex items-center gap-1.5 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 ${
+            className={cn(
+              'flex items-center gap-1.5 text-white text-sm font-bold px-3.5 py-2.5 rounded-xl transition-all duration-300 shrink-0',
               added
-                ? 'bg-green-500 scale-95'
+                ? 'bg-brand-500'
                 : outOfStock
                   ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700 active:scale-95'
-            }`}
+                  : 'bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-sm shadow-brand-600/20'
+            )}
           >
             {added ? (
               <>
                 <Check className="w-4 h-4" />
-                Agregado
+                Sumado
               </>
             ) : (
               <>

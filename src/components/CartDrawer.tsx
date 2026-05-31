@@ -1,12 +1,19 @@
 'use client';
 
-import { X, Minus, Plus, Trash2, MessageCircle, ShoppingBag } from 'lucide-react';
+import { useState } from 'react';
+import {
+  X, Minus, Plus, Trash2, MessageCircle, ShoppingBag, PawPrint,
+  ArrowLeft, ArrowRight, Truck,
+} from 'lucide-react';
+import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
+import { useCustomerStore } from '@/store/customer';
 import { generateWhatsAppLink } from '@/utils/whatsapp';
+import { createClient } from '@/utils/supabase/client';
+import { formatPrice } from '@/utils/format';
+import type { CustomerInput } from '@/types';
 
-function formatPrice(price: number): string {
-  return price.toLocaleString('es-AR', { minimumFractionDigits: 0 });
-}
+type Step = 'cart' | 'form';
 
 export default function CartDrawer({
   open,
@@ -21,36 +28,134 @@ export default function CartDrawer({
   const clearCart = useCartStore((s) => s.clearCart);
   const totalPrice = useCartStore((s) => s.totalPrice);
 
+  const customer = useCustomerStore((s) => s.data);
+  const setCustomer = useCustomerStore((s) => s.setData);
+
+  const [step, setStep] = useState<Step>('cart');
+  const [sending, setSending] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof CustomerInput, string>>>({});
+
   const total = totalPrice();
 
-  const handleCheckout = () => {
-    const link = generateWhatsAppLink(items, total);
-    window.open(link, '_blank');
+  const validate = (): boolean => {
+    const e: Partial<Record<keyof CustomerInput, string>> = {};
+    if (!customer.first_name.trim()) e.first_name = 'Ingresá tu nombre';
+    if (!customer.last_name.trim()) e.last_name = 'Ingresá tu apellido';
+    if (!/^\d{7,9}$/.test(customer.dni.trim())) e.dni = 'DNI inválido (7 u 8 dígitos)';
+    if (!/^[\d\s+()-]{6,}$/.test(customer.phone.trim())) e.phone = 'Teléfono inválido';
+    if (customer.address.trim().length < 6) e.address = 'Ingresá la dirección de envío';
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
+
+  const handleConfirm = async () => {
+    if (!validate()) return;
+    setSending(true);
+
+    const clean: CustomerInput = {
+      first_name: customer.first_name.trim(),
+      last_name: customer.last_name.trim(),
+      dni: customer.dni.trim(),
+      phone: customer.phone.trim(),
+      address: customer.address.trim(),
+    };
+
+    // Guardar cliente y registrar pedido (best-effort, no bloquea el checkout).
+    try {
+      const supabase = createClient();
+      await supabase.from('customers').upsert(
+        {
+          dni: clean.dni,
+          first_name: clean.first_name,
+          last_name: clean.last_name,
+          phone: clean.phone,
+          address: clean.address,
+        },
+        { onConflict: 'dni', ignoreDuplicates: true }
+      );
+
+      await supabase.from('orders').insert({
+        customer_name: `${clean.first_name} ${clean.last_name}`,
+        customer_dni: clean.dni,
+        customer_phone: clean.phone,
+        customer_address: clean.address,
+        items: items.map((i) => ({
+          product_id: i.product.id,
+          name: i.product.name,
+          qty: i.quantity,
+          price: i.product.price,
+        })),
+        total_amount: total,
+      });
+    } catch {
+      // Si falla el registro, igual seguimos al pedido por WhatsApp.
+    }
+
+    const link = generateWhatsAppLink(items, total, clean);
+    window.open(link, '_blank');
+
+    clearCart();
+    setSending(false);
+    setStep('cart');
+    onClose();
+  };
+
+  const field = (
+    name: keyof CustomerInput,
+    label: string,
+    props: React.InputHTMLAttributes<HTMLInputElement> = {}
+  ) => (
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
+      <input
+        value={customer[name]}
+        onChange={(e) => setCustomer({ [name]: e.target.value })}
+        className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+          errors[name] ? 'border-red-400' : 'border-gray-200'
+        }`}
+        {...props}
+      />
+      {errors[name] && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
+    </div>
+  );
 
   return (
     <>
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 transition-opacity"
-          onClick={onClose}
-        />
-      )}
+      <div
+        className={`fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 transition-opacity duration-300 ${
+          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      />
 
       <aside
         className={`fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl transform transition-transform duration-300 ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
+        aria-hidden={!open}
       >
         <div className="flex flex-col h-full">
+          {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-green-600" />
-              <h2 className="text-lg font-bold text-gray-900">Tu Carrito</h2>
+            <div className="flex items-center gap-2.5">
+              {step === 'form' ? (
+                <button
+                  onClick={() => setStep('cart')}
+                  className="p-1 -ml-1 text-gray-500 hover:text-gray-800"
+                  aria-label="Volver al carrito"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              ) : (
+                <ShoppingBag className="w-5 h-5 text-brand-600" />
+              )}
+              <h2 className="text-lg font-extrabold text-gray-900">
+                {step === 'form' ? 'Tus datos' : 'Tu pedido'}
+              </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
               aria-label="Cerrar carrito"
             >
               <X className="w-5 h-5" />
@@ -60,53 +165,53 @@ export default function CartDrawer({
           {items.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-8 text-center">
               <div>
-                <ShoppingBag className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg font-medium mb-1">Tu carrito está vacío</p>
-                <p className="text-gray-400 text-sm">
-                  Agregá productos desde nuestro catálogo
-                </p>
+                <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <PawPrint className="w-10 h-10 text-brand-300" />
+                </div>
+                <p className="text-gray-700 text-lg font-bold mb-1">Tu carrito está vacío</p>
+                <p className="text-gray-400 text-sm mb-6">Agregá productos desde el catálogo</p>
+                <Link
+                  href="/productos"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2.5 rounded-xl transition-colors"
+                >
+                  Ver productos
+                </Link>
               </div>
             </div>
-          ) : (
+          ) : step === 'cart' ? (
             <>
               <ul className="flex-1 overflow-y-auto p-4 space-y-3">
                 {items.map((item) => (
-                  <li
-                    key={item.product.id}
-                    className="flex gap-3 bg-gray-50 rounded-xl p-4"
-                  >
+                  <li key={item.product.id} className="flex gap-3 bg-gray-50 rounded-2xl p-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-sm truncate">
+                      <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
                         {item.product.name}
                       </h3>
-                      <p className="text-green-700 font-bold text-sm mt-0.5">
-                        ${formatPrice(item.product.price)} c/u
+                      <p className="text-brand-700 font-bold text-sm mt-0.5">
+                        {formatPrice(item.product.price)}
+                        <span className="text-gray-400 font-normal"> c/u</span>
                       </p>
-                      <div className="flex items-center gap-2 mt-2.5">
+                      <div className="flex items-center gap-2 mt-3">
                         <button
-                          onClick={() =>
-                            updateQuantity(item.product.id, item.quantity - 1)
-                          }
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-green-400 transition-colors"
+                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
                           aria-label="Reducir cantidad"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="text-sm font-bold w-6 text-center">
+                        <span className="text-sm font-bold w-7 text-center tabular-nums">
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() =>
-                            updateQuantity(item.product.id, item.quantity + 1)
-                          }
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-green-400 transition-colors"
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
                           aria-label="Aumentar cantidad"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
-
                     <div className="flex flex-col items-end justify-between">
                       <button
                         onClick={() => removeItem(item.product.id)}
@@ -116,34 +221,67 @@ export default function CartDrawer({
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <span className="text-sm font-extrabold text-gray-900">
-                        ${formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(item.product.price * item.quantity)}
                       </span>
                     </div>
                   </li>
                 ))}
               </ul>
 
-              <div className="border-t border-gray-100 p-5 space-y-4 bg-gray-50">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 font-medium">Total</span>
-                  <span className="text-2xl font-extrabold text-gray-900">
-                    ${formatPrice(total)}
-                  </span>
+              <div className="border-t border-gray-100 p-5 space-y-4 bg-gray-50/80">
+                <div className="flex items-center gap-2 text-brand-700 bg-brand-50 rounded-xl px-3 py-2 text-sm font-semibold">
+                  <Truck className="w-4 h-4" />
+                  Envío a domicilio gratis 🎉
                 </div>
-
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 font-semibold">Total</span>
+                  <span className="text-2xl font-extrabold text-gray-900">{formatPrice(total)}</span>
+                </div>
                 <button
-                  onClick={handleCheckout}
-                  className="w-full flex items-center justify-center gap-2.5 bg-green-600 hover:bg-green-700 active:scale-[0.98] text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-green-600/20"
+                  onClick={() => setStep('form')}
+                  className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold py-3.5 px-4 rounded-2xl transition-all shadow-lg shadow-brand-600/20"
                 >
-                  <MessageCircle className="w-5 h-5" />
-                  Confirmar Pedido por WhatsApp
+                  Continuar
+                  <ArrowRight className="w-5 h-5" />
                 </button>
-
                 <button
                   onClick={clearCart}
-                  className="w-full text-sm text-gray-400 hover:text-red-500 transition-colors py-1"
+                  className="w-full text-sm text-gray-400 hover:text-red-500 transition-colors"
                 >
                   Vaciar carrito
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                <p className="text-sm text-gray-500">
+                  Completá tus datos para coordinar el <strong>envío gratis</strong>. Tu
+                  pedido se confirma por WhatsApp.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {field('first_name', 'Nombre', { placeholder: 'Juan' })}
+                  {field('last_name', 'Apellido', { placeholder: 'Pérez' })}
+                </div>
+                {field('dni', 'DNI', { placeholder: '30123456', inputMode: 'numeric' })}
+                {field('phone', 'Teléfono', { placeholder: '3492 123456', inputMode: 'tel' })}
+                {field('address', 'Dirección de envío', {
+                  placeholder: 'Calle, número, barrio, ciudad',
+                })}
+              </div>
+
+              <div className="border-t border-gray-100 p-5 space-y-3 bg-gray-50/80">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 font-semibold">Total</span>
+                  <span className="text-xl font-extrabold text-gray-900">{formatPrice(total)}</span>
+                </div>
+                <button
+                  onClick={handleConfirm}
+                  disabled={sending}
+                  className="w-full flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#1ebe5a] disabled:opacity-70 active:scale-[0.98] text-white font-bold py-3.5 px-4 rounded-2xl transition-all shadow-lg shadow-green-900/10"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  {sending ? 'Abriendo WhatsApp…' : 'Confirmar pedido por WhatsApp'}
                 </button>
               </div>
             </>

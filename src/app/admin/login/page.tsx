@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogIn } from 'lucide-react';
+import { LogIn, Lock } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import Logo from '@/components/Logo';
 
@@ -22,25 +22,30 @@ export default function AdminLoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError('Credenciales inválidas. Intentá de nuevo.');
+      setError('Email o contraseña incorrectos.');
       setLoading(false);
       return;
     }
 
-    router.push('/admin');
+    router.replace('/admin');
     router.refresh();
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-lime-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-white to-brand-100/40 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Logo className="h-12 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900">Panel de Administración</h1>
-          <p className="text-sm text-gray-500 mt-1">Ingresá con tu cuenta</p>
+          <Logo className="text-3xl justify-center" icon />
+          <div className="flex items-center justify-center gap-1.5 text-sm text-gray-500 mt-3">
+            <Lock className="w-3.5 h-3.5" />
+            Panel de administración
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-gray-100 p-7 space-y-5 shadow-sm">
+        <form
+          onSubmit={handleLogin}
+          className="bg-white rounded-3xl border border-gray-100 p-7 space-y-5 shadow-lg shadow-gray-200/50"
+        >
           {error && (
             <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl font-medium">
               {error}
@@ -57,8 +62,9 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-              placeholder="admin@hipermascota.com"
+              autoComplete="email"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+              placeholder="tucorreo@ejemplo.com"
             />
           </div>
 
@@ -72,7 +78,8 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              autoComplete="current-password"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
               placeholder="••••••••"
             />
           </div>
@@ -80,12 +87,16 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold py-3 rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 text-white font-bold py-3 rounded-xl transition-colors"
           >
             <LogIn className="w-4 h-4" />
-            {loading ? 'Ingresando...' : 'Ingresar'}
+            {loading ? 'Ingresando…' : 'Ingresar'}
           </button>
         </form>
+
+        <p className="text-center text-xs text-gray-400 mt-6">
+          Hipermascota Rafaela · Acceso exclusivo
+        </p>
       </div>
     </div>
   );

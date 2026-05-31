@@ -1,10 +1,68 @@
 @import "tailwindcss";
 
+@theme {
+  /* Tipografías */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-logo: var(--font-baloo), ui-rounded, "Segoe UI", sans-serif;
+  --font-wordmark: var(--font-chewy), var(--font-baloo), "Comic Sans MS", cursive;
+
+  /* Paleta de marca Hipermascota (verde lima de la tarjeta) */
+  --color-brand-50: #f4faea;
+  --color-brand-100: #e6f3cd;
+  --color-brand-200: #d0e8a1;
+  --color-brand-300: #b5d96f;
+  --color-brand-400: #9ccc44;
+  --color-brand-500: #84bf2f;
+  --color-brand-600: #689a22;
+  --color-brand-700: #4f761d;
+  --color-brand-800: #3f5d1c;
+  --color-brand-900: #354f1c;
+
+  /* Verde oscuro de acento (banda inferior de la tarjeta) */
+  --color-leaf-500: #6aa82e;
+  --color-leaf-600: #588c25;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
 ::selection {
-  background-color: #bbf7d0;
-  color: #14532d;
+  background-color: #d0e8a1;
+  color: #354f1c;
+}
+
+/* Scrollbar sutil con tono de marca */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f4faea;
+}
+::-webkit-scrollbar-thumb {
+  background: #b5d96f;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ccc44;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
 }

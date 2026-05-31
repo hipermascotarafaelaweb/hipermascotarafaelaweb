@@ -30,9 +30,31 @@ export interface OrderItem {
   price: number;
 }
 
+export interface Customer {
+  id: number;
+  dni: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  address: string | null;
+  created_at: string;
+}
+
+/** Datos que el cliente completa en el carrito antes de enviar el pedido. */
+export interface CustomerInput {
+  first_name: string;
+  last_name: string;
+  dni: string;
+  phone: string;
+  address: string;
+}
+
 export interface Order {
   id: number;
+  customer_name: string | null;
+  customer_dni: string | null;
   customer_phone: string | null;
+  customer_address: string | null;
   items: OrderItem[];
   total_amount: number;
   status: 'Pendiente' | 'Entregado' | 'Cancelado';

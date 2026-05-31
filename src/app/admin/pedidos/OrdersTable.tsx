@@ -1,112 +1,129 @@
 'use client';
 
 import { useState } from 'react';
+import { User, Phone, MapPin, CreditCard, Package, ClipboardList } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { Order } from '@/types';
+import { formatPrice, formatDate } from '@/utils/format';
 
-const statusColors: Record<Order['status'], string> = {
-  Pendiente: 'bg-yellow-100 text-yellow-800',
-  Entregado: 'bg-green-100 text-green-800',
-  Cancelado: 'bg-red-100 text-red-800',
+const statusStyles: Record<Order['status'], string> = {
+  Pendiente: 'bg-amber-100 text-amber-800 ring-amber-200',
+  Entregado: 'bg-brand-100 text-brand-800 ring-brand-200',
+  Cancelado: 'bg-red-100 text-red-700 ring-red-200',
 };
 
-function formatPrice(price: number): string {
-  return price.toLocaleString('es-AR', { minimumFractionDigits: 0 });
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-export default function OrdersTable({
-  initialOrders,
-}: {
-  initialOrders: Order[];
-}) {
+export default function OrdersTable({ initialOrders }: { initialOrders: Order[] }) {
   const [orders, setOrders] = useState(initialOrders);
+  const [filter, setFilter] = useState<'Todos' | Order['status']>('Todos');
   const supabase = createClient();
 
   const updateStatus = async (id: number, status: Order['status']) => {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status })
-      .eq('id', id);
-
+    const { error } = await supabase.from('orders').update({ status }).eq('id', id);
     if (error) {
-      alert('Error al actualizar el estado.');
+      alert('No se pudo actualizar el estado.');
       return;
     }
-
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status } : o))
-    );
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
   };
 
+  const filtered = filter === 'Todos' ? orders : orders.filter((o) => o.status === filter);
+
+  if (orders.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 py-20 text-center">
+        <ClipboardList className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+        <p className="text-gray-400">Todavía no hay pedidos registrados.</p>
+        <p className="text-gray-300 text-sm mt-1">
+          Aparecerán acá cuando un cliente confirme su compra.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">#</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Fecha</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Items</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600">Total</th>
-              <th className="text-center px-4 py-3 font-medium text-gray-600">Estado</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {orders.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-gray-400">
-                  No hay pedidos registrados.
-                </td>
-              </tr>
-            ) : (
-              orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {order.id}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {formatDate(order.created_at)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <ul className="space-y-0.5">
-                      {order.items.map((item, i) => (
-                        <li key={i} className="text-gray-700">
-                          {item.qty}x {item.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">
-                    ${formatPrice(order.total_amount)}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <select
-                      value={order.status}
-                      onChange={(e) =>
-                        updateStatus(order.id, e.target.value as Order['status'])
-                      }
-                      className={`text-xs font-semibold px-3 py-1 rounded-full border-0 focus:ring-2 focus:ring-green-500 ${statusColors[order.status]}`}
-                    >
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="Entregado">Entregado</option>
-                      <option value="Cancelado">Cancelado</option>
-                    </select>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+    <div>
+      <div className="flex flex-wrap gap-2 mb-5">
+        {(['Todos', 'Pendiente', 'Entregado', 'Cancelado'] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+              filter === f
+                ? 'bg-brand-600 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-brand-300'
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {filtered.map((order) => (
+          <div key={order.id} className="bg-white rounded-2xl border border-gray-100 p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="font-extrabold text-gray-900">Pedido #{order.id}</p>
+                <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
+              </div>
+              <select
+                value={order.status}
+                onChange={(e) => updateStatus(order.id, e.target.value as Order['status'])}
+                className={`text-xs font-bold px-3 py-1.5 rounded-full ring-1 cursor-pointer focus:outline-none ${statusStyles[order.status]}`}
+              >
+                <option value="Pendiente">Pendiente</option>
+                <option value="Entregado">Entregado</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </div>
+
+            {/* Datos del cliente */}
+            <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 text-sm mb-3">
+              <p className="flex items-center gap-2 text-gray-800 font-semibold">
+                <User className="w-4 h-4 text-brand-600 shrink-0" />
+                {order.customer_name || 'Sin nombre'}
+                {order.customer_dni && (
+                  <span className="text-gray-400 font-normal flex items-center gap-1">
+                    <CreditCard className="w-3.5 h-3.5" /> {order.customer_dni}
+                  </span>
+                )}
+              </p>
+              {order.customer_phone && (
+                <a
+                  href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-brand-700 hover:underline"
+                >
+                  <Phone className="w-4 h-4 shrink-0" />
+                  {order.customer_phone}
+                </a>
+              )}
+              {order.customer_address && (
+                <p className="flex items-start gap-2 text-gray-600">
+                  <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                  {order.customer_address}
+                </p>
+              )}
+            </div>
+
+            {/* Items */}
+            <ul className="space-y-1 mb-3">
+              {order.items.map((item, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                  <Package className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                  <span className="font-medium">{item.qty}x</span> {item.name}
+                  <span className="text-gray-400 ml-auto">{formatPrice(item.price * item.qty)}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <span className="text-xs text-gray-400">🚚 Envío gratis</span>
+              <span className="font-extrabold text-gray-900">{formatPrice(order.total_amount)}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -24,15 +24,15 @@ export default function PedidosPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Historial de Pedidos</h1>
+      <h1 className="text-2xl font-extrabold text-gray-900 mb-6 font-logo">Pedidos</h1>
       <OrdersTable initialOrders={orders} />
     </div>
   );

@@ -1,20 +1,30 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/cart';
+import { cn } from '@/utils/cn';
 import Logo from './Logo';
+
+const links = [
+  { href: '/', label: 'Inicio' },
+  { href: '/productos', label: 'Productos' },
+  { href: '/contacto', label: 'Contacto' },
+];
 
 export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const totalItems = useCartStore((s) => s.totalItems);
+  const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
-    const handleScroll = () => setScrolled(window.scrollY > 10);
+    const handleScroll = () => setScrolled(window.scrollY > 8);
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -23,37 +33,46 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-white transition-shadow ${
-        scrolled ? 'shadow-md' : 'border-b border-gray-100'
-      }`}
+      className={cn(
+        'sticky top-0 z-50 bg-white/90 backdrop-blur-md transition-all',
+        scrolled ? 'shadow-sm border-b border-brand-100' : 'border-b border-transparent'
+      )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="shrink-0">
-            <Logo className="h-10" />
+          <Link href="/" className="shrink-0" aria-label="Hipermascota Rafaela - Inicio">
+            <Logo className="text-xl sm:text-2xl" />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-700">
-            <Link href="/" className="hover:text-green-700 transition-colors">
-              Inicio
-            </Link>
-            <Link href="/productos" className="hover:text-green-700 transition-colors">
-              Productos
-            </Link>
-            <Link href="/contacto" className="hover:text-green-700 transition-colors">
-              Contacto
-            </Link>
+          <nav className="hidden md:flex items-center gap-1">
+            {links.map((link) => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-semibold transition-colors',
+                    active
+                      ? 'bg-brand-50 text-brand-700'
+                      : 'text-gray-600 hover:text-brand-700 hover:bg-brand-50/60'
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <button
               onClick={onCartOpen}
-              className="relative p-2 text-gray-700 hover:text-green-700 transition-colors"
+              className="relative p-2.5 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors"
               aria-label="Abrir carrito"
             >
-              <ShoppingCart className="w-6 h-6" />
+              <ShoppingCart className="w-5 h-5" />
               {count > 0 && (
-                <span className="absolute -top-1 -right-1 bg-green-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                <span className="absolute top-0.5 right-0.5 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center ring-2 ring-white">
                   {count}
                 </span>
               )}
@@ -61,26 +80,35 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 text-gray-700"
+              className="md:hidden p-2.5 text-gray-700 hover:bg-brand-50 rounded-full"
               aria-label="Menú"
             >
-              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
       </div>
 
       {menuOpen && (
-        <nav className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 space-y-1">
-          <Link href="/" onClick={() => setMenuOpen(false)} className="block py-3 px-2 text-gray-700 hover:text-green-700 hover:bg-green-50 rounded-lg font-medium">
-            Inicio
-          </Link>
-          <Link href="/productos" onClick={() => setMenuOpen(false)} className="block py-3 px-2 text-gray-700 hover:text-green-700 hover:bg-green-50 rounded-lg font-medium">
-            Productos
-          </Link>
-          <Link href="/contacto" onClick={() => setMenuOpen(false)} className="block py-3 px-2 text-gray-700 hover:text-green-700 hover:bg-green-50 rounded-lg font-medium">
-            Contacto
-          </Link>
+        <nav className="md:hidden border-t border-brand-100 bg-white px-4 pb-4 pt-2 space-y-1">
+          {links.map((link) => {
+            const active = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className={cn(
+                  'block py-3 px-3 rounded-xl font-semibold transition-colors',
+                  active
+                    ? 'bg-brand-50 text-brand-700'
+                    : 'text-gray-700 hover:text-brand-700 hover:bg-brand-50'
+                )}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
       )}
     </header>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" width="640" height="300" role="img" aria-label="Hipermascota Rafaela">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Chewy&amp;display=swap');
+      .wm { font-family: 'Chewy', 'Comic Sans MS', cursive; fill: #8dc63f; }
+    </style>
+  </defs>
+  <text class="wm" x="320" y="135" font-size="120" text-anchor="middle">Hipermascota</text>
+  <text class="wm" x="320" y="250" font-size="120" text-anchor="middle">Rafaela</text>
+  <path d="M205 268 C 290 250, 350 250, 435 268" stroke="#8dc63f" stroke-width="9" stroke-linecap="round" fill="none"/>
+</svg>
