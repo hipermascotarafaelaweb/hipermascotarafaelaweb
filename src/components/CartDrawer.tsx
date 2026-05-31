@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   X, Minus, Plus, Trash2, MessageCircle, ShoppingBag, PawPrint,
-  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper, Ticket, Check,
+  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper, Ticket, Check, AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
@@ -11,6 +11,7 @@ import { useCustomerStore } from '@/store/customer';
 import { generateWhatsAppLink } from '@/utils/whatsapp';
 import { createClient } from '@/utils/supabase/client';
 import { formatPrice, effectivePrice, hasDiscount } from '@/utils/format';
+import { useToast } from '@/hooks/useToast';
 import type { CustomerInput, Coupon } from '@/types';
 
 type Step = 'cart' | 'form' | 'done';
@@ -30,6 +31,8 @@ export default function CartDrawer({
 
   const customer = useCustomerStore((s) => s.data);
   const setCustomer = useCustomerStore((s) => s.setData);
+
+  const toast = useToast();
 
   const [step, setStep] = useState<Step>('cart');
   const [sending, setSending] = useState(false);
@@ -109,54 +112,37 @@ export default function CartDrawer({
       address: customer.address.trim(),
     };
 
-    // Guardar cliente y registrar pedido (best-effort, no bloquea el checkout).
     try {
-      const supabase = createClient();
-      await supabase.from('customers').upsert(
-        {
-          dni: clean.dni,
-          first_name: clean.first_name,
-          last_name: clean.last_name,
-          phone: clean.phone,
-          address: clean.address,
-        },
-        { onConflict: 'dni', ignoreDuplicates: true }
-      );
-
-      await supabase.from('orders').insert({
-        customer_name: `${clean.first_name} ${clean.last_name}`,
-        customer_dni: clean.dni,
-        customer_phone: clean.phone,
-        customer_address: clean.address,
-        items: items.map((i) => ({
-          product_id: i.product.id,
-          name: i.product.name,
-          qty: i.quantity,
-          price: i.product.price,
-        })),
-        total_amount: finalTotal,
-        coupon_code: coupon?.code || null,
-        coupon_discount: couponDiscount,
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          customer: clean,
+          coupon,
+          finalTotal,
+          couponDiscount,
+        }),
       });
 
-      // Incrementar el contador de uso del cupón
-      if (coupon) {
-        await supabase
-          .from('coupons')
-          .update({ uses_count: coupon.uses_count + 1 })
-          .eq('id', coupon.id);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create order');
       }
-    } catch {
-      // Si falla el registro, igual seguimos al pedido por WhatsApp.
+
+      const link = generateWhatsAppLink(items, finalTotal, clean, couponDiscount);
+      window.open(link, '_blank');
+
+      clearCart();
+      setSentLink(link);
+      setStep('done');
+      toast.success('Pedido creado exitosamente');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al crear el pedido';
+      toast.error(message);
+    } finally {
+      setSending(false);
     }
-
-    const link = generateWhatsAppLink(items, finalTotal, clean, couponDiscount);
-    window.open(link, '_blank');
-
-    clearCart();
-    setSentLink(link);
-    setSending(false);
-    setStep('done');
   };
 
   const field = (
@@ -269,55 +255,64 @@ export default function CartDrawer({
           ) : step === 'cart' ? (
             <>
               <ul className="flex-1 overflow-y-auto p-4 space-y-3">
-                {items.map((item) => (
-                  <li key={item.product.id} className="flex gap-3 bg-gray-50 rounded-2xl p-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
-                        {item.product.name}
-                      </h3>
-                      <p className="text-brand-700 font-bold text-sm mt-0.5">
-                        {formatPrice(effectivePrice(item.product))}
-                        {hasDiscount(item.product) && (
-                          <span className="text-gray-400 font-normal line-through ml-1.5">
-                            {formatPrice(item.product.price)}
-                          </span>
+                {items.map((item) => {
+                  const lowStock = item.product.stock > 0 && item.product.stock <= 3;
+                  return (
+                    <li key={item.product.id} className="flex gap-3 bg-gray-50 rounded-2xl p-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">
+                          {item.product.name}
+                        </h3>
+                        <p className="text-brand-700 font-bold text-sm mt-0.5">
+                          {formatPrice(effectivePrice(item.product))}
+                          {hasDiscount(item.product) && (
+                            <span className="text-gray-400 font-normal line-through ml-1.5">
+                              {formatPrice(item.product.price)}
+                            </span>
+                          )}
+                          <span className="text-gray-400 font-normal"> c/u</span>
+                        </p>
+                        {lowStock && (
+                          <div className="flex items-center gap-1.5 text-xs text-amber-600 mt-2">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            Solo {item.product.stock} en stock
+                          </div>
                         )}
-                        <span className="text-gray-400 font-normal"> c/u</span>
-                      </p>
-                      <div className="flex items-center gap-2 mt-3">
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
-                          aria-label="Reducir cantidad"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="text-sm font-bold w-7 text-center tabular-nums">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
-                          aria-label="Aumentar cantidad"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+                            aria-label="Reducir cantidad"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="text-sm font-bold w-7 text-center tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
+                            aria-label="Aumentar cantidad"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-col items-end justify-between">
-                      <button
-                        onClick={() => removeItem(item.product.id)}
-                        className="text-gray-300 hover:text-red-500 transition-colors"
-                        aria-label="Eliminar producto"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <span className="text-sm font-extrabold text-gray-900">
-                        {formatPrice(effectivePrice(item.product) * item.quantity)}
-                      </span>
-                    </div>
-                  </li>
-                ))}
+                      <div className="flex flex-col items-end justify-between">
+                        <button
+                          onClick={() => removeItem(item.product.id)}
+                          className="text-gray-300 hover:text-red-500 transition-colors"
+                          aria-label="Eliminar producto"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <span className="text-sm font-extrabold text-gray-900">
+                          {formatPrice(effectivePrice(item.product) * item.quantity)}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               <div className="border-t border-gray-100 p-5 space-y-4 bg-gray-50/80">

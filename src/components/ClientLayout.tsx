@@ -7,6 +7,7 @@ import CartDrawer from '@/components/CartDrawer';
 import WhatsAppFab from '@/components/WhatsAppFab';
 import MobileCartBar from '@/components/MobileCartBar';
 import Footer from '@/components/Footer';
+import ToastContainer from '@/components/ToastContainer';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [cartOpen, setCartOpen] = useState(false);
@@ -31,6 +32,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <MobileCartBar onOpen={() => setCartOpen(true)} />
         </>
       )}
+      <ToastContainer />
     </>
   );
 }
