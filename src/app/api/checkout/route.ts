@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Create the order and deduct stock atomically
     const orderItems = items.map((i: CartItem) => ({
