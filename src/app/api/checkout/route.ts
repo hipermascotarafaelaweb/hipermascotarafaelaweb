@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import type { CartItem, CustomerInput, Coupon } from '@/types';
 import { Resend } from 'resend';
 
@@ -27,6 +27,19 @@ function checkRateLimit(ip: string): boolean {
 
   entry.count++;
   return true;
+}
+
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = serviceKey || anonKey;
+
+  if (!url || !key) {
+    throw new Error('Missing Supabase configuration');
+  }
+
+  return createClient(url, key);
 }
 
 async function sendOrderEmail(
@@ -100,13 +113,10 @@ export async function POST(request: NextRequest) {
     const { items, customer, coupon, finalTotal, couponDiscount } = body;
 
     if (!items || !customer || finalTotal === undefined) {
-      return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
+      return NextResponse.json({ error: 'Datos del pedido incompletos' }, { status: 400 });
     }
 
-    const supabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    const supabase = getSupabase();
 
     const orderItems = items.map((i: CartItem) => ({
       product_id: i.product.id,
@@ -132,9 +142,19 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    if (orderError || !orderData) {
-      console.error('Order creation error:', orderError);
-      return NextResponse.json({ error: 'Error al crear el pedido' }, { status: 500 });
+    if (orderError) {
+      console.error('Order creation error:', JSON.stringify(orderError));
+      return NextResponse.json(
+        { error: `Error al crear el pedido: ${orderError.message}` },
+        { status: 500 }
+      );
+    }
+
+    if (!orderData) {
+      return NextResponse.json(
+        { error: 'No se pudo crear el pedido' },
+        { status: 500 }
+      );
     }
 
     // Save customer
@@ -166,8 +186,9 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Checkout error:', error);
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
-      { error: 'Server error' },
+      { error: `Error del servidor: ${message}` },
       { status: 500 }
     );
   }
