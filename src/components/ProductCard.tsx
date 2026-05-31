@@ -2,11 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingCart, PawPrint, Check, Star } from 'lucide-react';
+import { ShoppingCart, PawPrint, Check, Star, Tag } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '@/types';
 import { useCartStore } from '@/store/cart';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/utils/format';
 import { cn } from '@/utils/cn';
 
 export default function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
@@ -14,6 +14,7 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
   const [added, setAdded] = useState(false);
   const outOfStock = product.stock <= 0;
   const lowStock = product.stock > 0 && product.stock <= 5;
+  const onSale = hasDiscount(product);
 
   const handleAdd = () => {
     addItem(product);
@@ -42,6 +43,11 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
         )}
 
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          {onSale && !outOfStock && (
+            <span className="bg-red-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
+              <Tag className="w-3 h-3 fill-current" /> -{discountPercent(product)}%
+            </span>
+          )}
           {product.is_featured && !outOfStock && (
             <span className="bg-brand-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
               <Star className="w-3 h-3 fill-current" /> Destacado
@@ -79,9 +85,16 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
         )}
 
         <div className="mt-auto pt-3 border-t border-gray-50">
-          <span className="block text-lg sm:text-xl font-extrabold text-gray-900 mb-2.5">
-            {formatPrice(product.price)}
-          </span>
+          <div className="mb-2.5">
+            {onSale && (
+              <span className="block text-xs text-gray-400 line-through leading-none">
+                {formatPrice(product.price)}
+              </span>
+            )}
+            <span className={cn('block text-lg sm:text-xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
+              {formatPrice(effectivePrice(product))}
+            </span>
+          </div>
           <button
             onClick={handleAdd}
             disabled={outOfStock || added}

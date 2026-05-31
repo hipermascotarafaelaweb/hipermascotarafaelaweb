@@ -5,13 +5,21 @@ export interface Category {
   created_at: string;
 }
 
+export type PetType = 'perro' | 'gato' | 'ambos';
+
 export interface Product {
   id: number;
   name: string;
   description: string | null;
   price: number;
+  /** Precio de oferta. Si es válido (mayor a 0 y menor al precio), manda. */
+  sale_price: number | null;
   category_id: number | null;
   image_url: string | null;
+  /** Fotos adicionales para la galería del detalle. */
+  images: string[] | null;
+  /** Para qué mascota es el producto. 'ambos' aparece en ambos filtros. */
+  pet_type: PetType;
   stock: number;
   is_featured: boolean;
   created_at: string;

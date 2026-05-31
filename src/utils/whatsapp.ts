@@ -1,4 +1,5 @@
 import type { CartItem, CustomerInput } from '@/types';
+import { effectivePrice } from '@/utils/format';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493492330291';
 
@@ -14,7 +15,7 @@ export function generateWhatsAppLink(
   const itemLines = items
     .map(
       (item) =>
-        `• ${item.quantity}x ${item.product.name} ($${formatNumber(item.product.price)} c/u)`
+        `• ${item.quantity}x ${item.product.name} ($${formatNumber(effectivePrice(item.product))} c/u)`
     )
     .join('\n');
 

@@ -3,17 +3,17 @@
 import { useState } from 'react';
 import {
   X, Minus, Plus, Trash2, MessageCircle, ShoppingBag, PawPrint,
-  ArrowLeft, ArrowRight, Truck,
+  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { useCustomerStore } from '@/store/customer';
 import { generateWhatsAppLink } from '@/utils/whatsapp';
 import { createClient } from '@/utils/supabase/client';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, effectivePrice, hasDiscount } from '@/utils/format';
 import type { CustomerInput } from '@/types';
 
-type Step = 'cart' | 'form';
+type Step = 'cart' | 'form' | 'done';
 
 export default function CartDrawer({
   open,
@@ -34,8 +34,15 @@ export default function CartDrawer({
   const [step, setStep] = useState<Step>('cart');
   const [sending, setSending] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInput, string>>>({});
+  const [sentLink, setSentLink] = useState('');
 
   const total = totalPrice();
+
+  // Cierra el panel y, si el pedido ya se envió, vuelve al estado inicial.
+  const handleClose = () => {
+    onClose();
+    if (step === 'done') setStep('cart');
+  };
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof CustomerInput, string>> = {};
@@ -95,9 +102,9 @@ export default function CartDrawer({
     window.open(link, '_blank');
 
     clearCart();
+    setSentLink(link);
     setSending(false);
-    setStep('cart');
-    onClose();
+    setStep('done');
   };
 
   const field = (
@@ -125,7 +132,7 @@ export default function CartDrawer({
         className={`fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       <aside
@@ -150,11 +157,11 @@ export default function CartDrawer({
                 <ShoppingBag className="w-5 h-5 text-brand-600" />
               )}
               <h2 className="text-lg font-extrabold text-gray-900">
-                {step === 'form' ? 'Tus datos' : 'Tu pedido'}
+                {step === 'form' ? 'Tus datos' : step === 'done' ? '¡Listo!' : 'Tu pedido'}
               </h2>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
               aria-label="Cerrar carrito"
             >
@@ -162,7 +169,35 @@ export default function CartDrawer({
             </button>
           </div>
 
-          {items.length === 0 ? (
+          {step === 'done' ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-11 h-11 text-brand-600" />
+              </div>
+              <h3 className="text-xl font-extrabold text-gray-900 mb-1.5 flex items-center gap-2">
+                ¡Gracias por tu pedido! <PartyPopper className="w-5 h-5 text-brand-600" />
+              </h3>
+              <p className="text-gray-500 text-sm max-w-xs mb-6">
+                Te abrimos WhatsApp para confirmar la disponibilidad y coordinar el{' '}
+                <strong>envío gratis</strong>. Si no se abrió, tocá el botón de abajo.
+              </p>
+              <a
+                href={sentLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#1ebe5a] text-white font-bold py-3.5 px-4 rounded-2xl transition-colors mb-3"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Abrir WhatsApp de nuevo
+              </a>
+              <button
+                onClick={handleClose}
+                className="w-full text-sm font-semibold text-gray-500 hover:text-brand-700 transition-colors py-2"
+              >
+                Seguir comprando
+              </button>
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-8 text-center">
               <div>
                 <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -189,7 +224,12 @@ export default function CartDrawer({
                         {item.product.name}
                       </h3>
                       <p className="text-brand-700 font-bold text-sm mt-0.5">
-                        {formatPrice(item.product.price)}
+                        {formatPrice(effectivePrice(item.product))}
+                        {hasDiscount(item.product) && (
+                          <span className="text-gray-400 font-normal line-through ml-1.5">
+                            {formatPrice(item.product.price)}
+                          </span>
+                        )}
                         <span className="text-gray-400 font-normal"> c/u</span>
                       </p>
                       <div className="flex items-center gap-2 mt-3">
@@ -221,7 +261,7 @@ export default function CartDrawer({
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <span className="text-sm font-extrabold text-gray-900">
-                        {formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(effectivePrice(item.product) * item.quantity)}
                       </span>
                     </div>
                   </li>
@@ -268,6 +308,13 @@ export default function CartDrawer({
                 {field('address', 'Dirección de envío', {
                   placeholder: 'Calle, número, barrio, ciudad',
                 })}
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Tus datos se usan únicamente para coordinar la entrega.{' '}
+                  <Link href="/privacidad" onClick={onClose} className="text-brand-600 hover:underline font-semibold">
+                    Aviso de privacidad
+                  </Link>
+                  .
+                </p>
               </div>
 
               <div className="border-t border-gray-100 p-5 space-y-3 bg-gray-50/80">

@@ -2,29 +2,43 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Plus, Pencil, Trash2, X, Save, Upload, PawPrint, Search, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, Upload, PawPrint, Search, Star, ImagePlus, Tag } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import type { Product, Category } from '@/types';
-import { formatPrice } from '@/utils/format';
+import type { Product, Category, PetType } from '@/types';
+import { formatPrice, hasDiscount } from '@/utils/format';
 
 interface ProductForm {
   name: string;
   description: string;
   price: string;
+  sale_price: string;
   category_id: string;
   stock: string;
+  pet_type: PetType;
   is_featured: boolean;
   image: File | null;
+  gallery: File[];
+  existingImages: string[];
 }
 
 const emptyForm: ProductForm = {
   name: '',
   description: '',
   price: '',
+  sale_price: '',
   category_id: '',
   stock: '0',
+  pet_type: 'ambos',
   is_featured: false,
   image: null,
+  gallery: [],
+  existingImages: [],
+};
+
+const petLabels: Record<PetType, string> = {
+  ambos: 'Perros y gatos',
+  perro: 'Solo perros',
+  gato: 'Solo gatos',
 };
 
 export default function AdminProductsTable({
@@ -65,10 +79,14 @@ export default function AdminProductsTable({
       name: product.name,
       description: product.description || '',
       price: String(product.price),
+      sale_price: product.sale_price != null ? String(product.sale_price) : '',
       category_id: product.category_id ? String(product.category_id) : '',
       stock: String(product.stock),
+      pet_type: product.pet_type ?? 'ambos',
       is_featured: product.is_featured,
       image: null,
+      gallery: [],
+      existingImages: product.images ?? [],
     });
     setCurrentImage(product.image_url);
     setShowForm(true);
@@ -98,6 +116,14 @@ export default function AdminProductsTable({
     setLoading(true);
     setError('');
 
+    const price = parseFloat(form.price);
+    const salePrice = form.sale_price.trim() ? parseFloat(form.sale_price) : null;
+    if (salePrice != null && salePrice >= price) {
+      setError('El precio de oferta debe ser menor al precio normal.');
+      setLoading(false);
+      return;
+    }
+
     let image_url: string | null | undefined;
     if (form.image) {
       image_url = await uploadImage(form.image);
@@ -108,12 +134,28 @@ export default function AdminProductsTable({
       }
     }
 
+    // Subir las fotos nuevas de la galería y conservar las existentes.
+    const uploadedGallery: string[] = [];
+    for (const file of form.gallery) {
+      const url = await uploadImage(file);
+      if (!url) {
+        setError('No se pudo subir una de las fotos de la galería.');
+        setLoading(false);
+        return;
+      }
+      uploadedGallery.push(url);
+    }
+    const images = [...form.existingImages, ...uploadedGallery];
+
     const payload = {
       name: form.name,
       description: form.description || null,
-      price: parseFloat(form.price),
+      price,
+      sale_price: salePrice,
       category_id: form.category_id ? parseInt(form.category_id) : null,
       stock: parseInt(form.stock),
+      pet_type: form.pet_type,
+      images,
       is_featured: form.is_featured,
       ...(image_url !== undefined && { image_url }),
     };
@@ -211,7 +253,18 @@ export default function AdminProductsTable({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{product.category?.name || '—'}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatPrice(product.price)}</td>
+                    <td className="px-4 py-3 text-right">
+                      {hasDiscount(product) ? (
+                        <span className="inline-flex flex-col items-end leading-tight">
+                          <span className="text-xs text-gray-400 line-through">{formatPrice(product.price)}</span>
+                          <span className="font-semibold text-red-600 inline-flex items-center gap-1">
+                            <Tag className="w-3 h-3" /> {formatPrice(product.sale_price as number)}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="font-semibold text-gray-900">{formatPrice(product.price)}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <span
                         className={`inline-block min-w-[2rem] font-bold ${
@@ -277,7 +330,7 @@ export default function AdminProductsTable({
                 <label className="flex-1 flex items-center gap-2 cursor-pointer border border-dashed border-gray-300 rounded-xl px-4 py-3 hover:border-brand-400 transition-colors">
                   <Upload className="w-4 h-4 text-gray-400" />
                   <span className="text-sm text-gray-500 truncate">
-                    {form.image ? form.image.name : 'Subir foto del producto'}
+                    {form.image ? form.image.name : 'Foto principal'}
                   </span>
                   <input
                     type="file"
@@ -286,6 +339,57 @@ export default function AdminProductsTable({
                     onChange={(e) => setForm({ ...form, image: e.target.files?.[0] || null })}
                   />
                 </label>
+              </div>
+
+              {/* Galería (fotos adicionales) */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Galería (fotos adicionales)
+                </label>
+                <div className="flex flex-wrap gap-2.5">
+                  {form.existingImages.map((src) => (
+                    <div key={src} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-100 group">
+                      <Image src={src} alt="" fill className="object-cover" sizes="64px" />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm({ ...form, existingImages: form.existingImages.filter((s) => s !== src) })
+                        }
+                        className="absolute top-0.5 right-0.5 bg-gray-900/70 text-white rounded-full p-0.5"
+                        aria-label="Quitar foto"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {form.gallery.map((file, i) => (
+                    <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-brand-200">
+                      <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" sizes="64px" />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm({ ...form, gallery: form.gallery.filter((_, j) => j !== i) })
+                        }
+                        className="absolute top-0.5 right-0.5 bg-gray-900/70 text-white rounded-full p-0.5"
+                        aria-label="Quitar foto"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="w-16 h-16 flex flex-col items-center justify-center gap-1 cursor-pointer border border-dashed border-gray-300 rounded-lg text-gray-400 hover:border-brand-400 hover:text-brand-500 transition-colors">
+                    <ImagePlus className="w-5 h-5" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) =>
+                        setForm({ ...form, gallery: [...form.gallery, ...Array.from(e.target.files || [])] })
+                      }
+                    />
+                  </label>
+                </div>
               </div>
 
               <div>
@@ -332,6 +436,36 @@ export default function AdminProductsTable({
                     onChange={(e) => setForm({ ...form, stock: e.target.value })}
                     className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-1">
+                    <Tag className="w-3.5 h-3.5 text-red-500" />
+                    Precio de oferta
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Opcional"
+                    value={form.sale_price}
+                    onChange={(e) => setForm({ ...form, sale_price: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Para</label>
+                  <select
+                    value={form.pet_type}
+                    onChange={(e) => setForm({ ...form, pet_type: e.target.value as PetType })}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm bg-white"
+                  >
+                    {(Object.keys(petLabels) as PetType[]).map((t) => (
+                      <option key={t} value={t}>{petLabels[t]}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

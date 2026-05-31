@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Baloo_2, Itim } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 
@@ -68,6 +69,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-white font-sans text-gray-800 overflow-x-hidden">
         <ClientLayout>{children}</ClientLayout>
+        <Analytics />
       </body>
     </html>
   );

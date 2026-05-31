@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, PawPrint } from 'lucide-react';
-import type { Product, Category } from '@/types';
+import { Search, PawPrint, Dog, Cat, PawPrint as PawIcon } from 'lucide-react';
+import type { Product, Category, PetType } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { cn } from '@/utils/cn';
 
 type SortOption = 'recent' | 'price_asc' | 'price_desc';
+type PetFilter = 'all' | 'perro' | 'gato';
+
+const petFilters: { value: PetFilter; label: string; icon: typeof Dog }[] = [
+  { value: 'all', label: 'Todas', icon: PawIcon },
+  { value: 'perro', label: 'Perros', icon: Dog },
+  { value: 'gato', label: 'Gatos', icon: Cat },
+];
 
 export default function ProductGrid({
   products,
@@ -21,6 +28,7 @@ export default function ProductGrid({
     ? initialCategory
     : 'all';
   const [selectedCategory, setSelectedCategory] = useState<string>(validInitial);
+  const [pet, setPet] = useState<PetFilter>('all');
   const [sort, setSort] = useState<SortOption>('recent');
   const [search, setSearch] = useState('');
 
@@ -36,6 +44,13 @@ export default function ProductGrid({
       );
     }
 
+    if (pet !== 'all') {
+      result = result.filter((p) => {
+        const t: PetType = p.pet_type ?? 'ambos';
+        return t === pet || t === 'ambos';
+      });
+    }
+
     if (selectedCategory !== 'all') {
       result = result.filter((p) => p.category?.slug === selectedCategory);
     }
@@ -44,7 +59,7 @@ export default function ProductGrid({
     if (sort === 'price_desc') result = [...result].sort((a, b) => b.price - a.price);
 
     return result;
-  }, [products, selectedCategory, sort, search]);
+  }, [products, selectedCategory, pet, sort, search]);
 
   return (
     <div>
@@ -57,6 +72,24 @@ export default function ProductGrid({
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
         />
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        {petFilters.map((f) => (
+          <button
+            key={f.value}
+            onClick={() => setPet(f.value)}
+            className={cn(
+              'flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all',
+              pet === f.value
+                ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-brand-400'
+            )}
+          >
+            <f.icon className="w-4 h-4" />
+            {f.label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-8">

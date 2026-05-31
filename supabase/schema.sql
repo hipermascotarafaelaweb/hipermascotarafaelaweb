@@ -18,12 +18,20 @@ create table if not exists products (
   name text not null,
   description text,
   price numeric(10,2) not null check (price >= 0),
+  sale_price numeric(10,2) check (sale_price is null or sale_price >= 0),
   category_id bigint references categories(id) on delete set null,
   image_url text,
+  images text[] not null default '{}',
+  pet_type text not null default 'ambos' check (pet_type in ('perro','gato','ambos')),
   stock int not null default 0 check (stock >= 0),
   is_featured boolean default false,
   created_at timestamptz default now()
 );
+
+-- Por si la tabla products ya existía sin estas columnas:
+alter table products add column if not exists sale_price numeric(10,2);
+alter table products add column if not exists images text[] not null default '{}';
+alter table products add column if not exists pet_type text not null default 'ambos';
 
 -- 3. CLIENTES ---------------------------------------------------
 create table if not exists customers (
