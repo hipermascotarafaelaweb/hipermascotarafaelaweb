@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, PawPrint, Dog, Cat, PawPrint as PawIcon } from 'lucide-react';
+import { Search, PawPrint, Dog, Cat, PawPrint as PawIcon, ChevronDown } from 'lucide-react';
 import type { Product, Category, PetType } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { cn } from '@/utils/cn';
@@ -31,6 +31,10 @@ export default function ProductGrid({
   const [pet, setPet] = useState<PetFilter>('all');
   const [sort, setSort] = useState<SortOption>('recent');
   const [search, setSearch] = useState('');
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [onSaleOnly, setOnSaleOnly] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const filtered = useMemo(() => {
     let result = products;
@@ -55,11 +59,21 @@ export default function ProductGrid({
       result = result.filter((p) => p.category?.slug === selectedCategory);
     }
 
+    if (minPrice || maxPrice) {
+      const min = minPrice ? parseFloat(minPrice) : 0;
+      const max = maxPrice ? parseFloat(maxPrice) : Infinity;
+      result = result.filter((p) => p.price >= min && p.price <= max);
+    }
+
+    if (onSaleOnly) {
+      result = result.filter((p) => p.sale_price && p.sale_price > 0 && p.sale_price < p.price);
+    }
+
     if (sort === 'price_asc') result = [...result].sort((a, b) => a.price - b.price);
     if (sort === 'price_desc') result = [...result].sort((a, b) => b.price - a.price);
 
     return result;
-  }, [products, selectedCategory, pet, sort, search]);
+  }, [products, selectedCategory, pet, sort, search, minPrice, maxPrice, onSaleOnly]);
 
   return (
     <div>
@@ -74,7 +88,7 @@ export default function ProductGrid({
         />
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 flex-wrap items-center">
         {petFilters.map((f) => (
           <button
             key={f.value}
@@ -90,7 +104,62 @@ export default function ProductGrid({
             {f.label}
           </button>
         ))}
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-white border border-gray-200 text-gray-600 hover:border-brand-400 transition-all"
+        >
+          <span>Filtros avanzados</span>
+          <ChevronDown className={cn('w-4 h-4 transition-transform', showAdvanced && 'rotate-180')} />
+        </button>
       </div>
+
+      {showAdvanced && (
+        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 mb-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Precio mínimo</label>
+              <input
+                type="number"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                placeholder="$0"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Precio máximo</label>
+              <input
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                placeholder="Sin límite"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={onSaleOnly}
+              onChange={(e) => setOnSaleOnly(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-brand-600"
+            />
+            <span className="text-sm font-semibold text-gray-700">Solo productos en oferta</span>
+          </label>
+          {(minPrice || maxPrice || onSaleOnly) && (
+            <button
+              onClick={() => {
+                setMinPrice('');
+                setMaxPrice('');
+                setOnSaleOnly(false);
+              }}
+              className="text-sm text-gray-500 hover:text-red-600 transition-colors"
+            >
+              Limpiar filtros avanzados
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <div className="flex flex-wrap gap-2 flex-1">

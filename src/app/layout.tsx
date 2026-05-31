@@ -22,8 +22,6 @@ const itim = Itim({
   variable: '--font-itim',
 });
 
-const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -57,6 +55,8 @@ export const viewport: Viewport = {
   themeColor: '#8dc63f',
 };
 
+const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -67,6 +67,12 @@ export default function RootLayout({
       lang="es"
       className={`${inter.variable} ${baloo.variable} ${itim.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body className="min-h-full flex flex-col bg-white font-sans text-gray-800 overflow-x-hidden">
         <ClientLayout>{children}</ClientLayout>
         <Analytics />
