@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Bone, Dog, Cat, ShoppingBag, Sparkles } from 'lucide-react';
+import { ArrowRight, Home, Link2, Radio, UtensilsCrossed, Droplets, Gamepad2, Wind, Shirt, Backpack } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import ProductCard from '@/components/ProductCard';
 import type { Product, Category } from '@/types';
@@ -20,7 +20,23 @@ function CardSkeleton() {
   );
 }
 
-const categoryIcons = [Bone, Dog, Cat, ShoppingBag, Sparkles];
+const categoryIconMap: Record<string, any> = {
+  'camas-y-cuchas': Home,
+  'collares-y-correas': Link2,
+  'collares-correas-y-arneses': Radio,
+  'comederos-y-bebederos': UtensilsCrossed,
+  'higiene-y-cuidado': Droplets,
+  'juguetes': Gamepad2,
+  'rascadores-y-areneros': Wind,
+  'ropa-y-abrigos': Shirt,
+  'transporte-y-paseo': Backpack,
+};
+
+const defaultIcons = [Home, Link2, Radio, UtensilsCrossed, Droplets];
+
+function getCategoryIcon(slug: string) {
+  return categoryIconMap[slug] || defaultIcons[Object.keys(categoryIconMap).length % defaultIcons.length];
+}
 
 export default function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -63,8 +79,8 @@ export default function FeaturedProducts() {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {categories.map((cat, i) => {
-                const Icon = categoryIcons[i % categoryIcons.length];
+              {categories.map((cat) => {
+                const Icon = getCategoryIcon(cat.slug);
                 return (
                   <Link
                     key={cat.id}
