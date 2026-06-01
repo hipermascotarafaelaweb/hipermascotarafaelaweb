@@ -14,10 +14,6 @@ export default function HomePage() {
         <PawPrint className="absolute bottom-8 left-1/4 w-20 h-20 text-brand-100 rotate-45 hidden lg:block" />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center relative">
-          <div className="inline-flex items-center gap-2 bg-white border border-brand-200 text-brand-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6 shadow-sm animate-fade-in-up">
-            <PawPrint className="w-4 h-4" />
-            Accesorios para mascotas en Rafaela
-          </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-[1.05] font-logo animate-fade-in-up">
             Todo para mimar a tu{' '}
             <span className="text-brand-500 relative whitespace-nowrap">
