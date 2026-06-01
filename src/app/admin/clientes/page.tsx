@@ -1,10 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, Users, Phone, MapPin, CreditCard, Search, Download } from 'lucide-react';
+import { Loader2, Users, Phone, MapPin, CreditCard, Search, Download, Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { Customer } from '@/types';
 import { formatDate } from '@/utils/format';
+
+interface CustomerForm {
+  first_name: string;
+  last_name: string;
+  dni: string;
+  phone: string;
+  address: string;
+}
+
+const emptyForm: CustomerForm = {
+  first_name: '',
+  last_name: '',
+  dni: '',
+  phone: '',
+  address: '',
+};
 
 function downloadCSV(customers: Customer[]) {
   const headers = ['DNI', 'Nombre', 'Apellido', 'Teléfono', 'Dirección', 'Registrado'];
@@ -28,18 +44,85 @@ export default function ClientesPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<CustomerForm>(emptyForm);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const supabase = createClient();
 
-  useEffect(() => {
-    const supabase = createClient();
-    supabase
+  const fetchCustomers = async () => {
+    const { data } = await supabase
       .from('customers')
       .select('*')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setCustomers((data as Customer[]) || []);
-        setLoading(false);
-      });
+      .order('created_at', { ascending: false });
+    setCustomers((data as Customer[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCustomers();
   }, []);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+    setError('');
+  };
+
+  const openEdit = (customer: Customer) => {
+    setEditingId(customer.id);
+    setForm({
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      dni: customer.dni,
+      phone: customer.phone,
+      address: customer.address || '',
+    });
+    setShowForm(true);
+    setError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.first_name.trim() || !form.last_name.trim() || !form.dni.trim() || !form.phone.trim()) {
+      setError('Nombre, apellido, DNI y teléfono son obligatorios.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+
+    const payload = {
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      dni: form.dni.trim(),
+      phone: form.phone.trim(),
+      address: form.address.trim() || null,
+    };
+
+    const { error: dbError } = editingId
+      ? await supabase.from('customers').update(payload).eq('id', editingId)
+      : await supabase.from('customers').insert(payload);
+
+    setBusy(false);
+    if (dbError) {
+      setError('No se pudo guardar el cliente. ¿El DNI ya existe?');
+      return;
+    }
+    setShowForm(false);
+    fetchCustomers();
+  };
+
+  const handleDelete = async (customer: Customer) => {
+    if (!confirm(`¿Eliminar cliente "${customer.first_name} ${customer.last_name}"?`)) return;
+    const { error } = await supabase.from('customers').delete().eq('id', customer.id);
+    if (error) {
+      alert('No se pudo eliminar.');
+      return;
+    }
+    fetchCustomers();
+  };
 
   if (loading) {
     return (
@@ -62,7 +145,16 @@ export default function ClientesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-extrabold text-gray-900 font-logo">Clientes</h1>
-        <span className="text-sm text-gray-400">{customers.length} registrados</span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-400">{customers.length} registrados</span>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo cliente
+          </button>
+        </div>
       </div>
 
       {customers.length === 0 ? (
@@ -104,6 +196,7 @@ export default function ClientesPage() {
                     <th className="text-left px-4 py-3 font-semibold text-gray-500 hidden sm:table-cell">Teléfono</th>
                     <th className="text-left px-4 py-3 font-semibold text-gray-500 hidden md:table-cell">Dirección</th>
                     <th className="text-left px-4 py-3 font-semibold text-gray-500 hidden lg:table-cell">Registrado</th>
+                    <th className="text-center px-4 py-3 font-semibold text-gray-500 w-16">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -117,6 +210,24 @@ export default function ClientesPage() {
                       <td className="px-4 py-3 text-gray-600 hidden md:table-cell truncate">{c.address || '—'}</td>
                       <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
                         {formatDate(c.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => openEdit(c)}
+                            className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(c)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -163,6 +274,93 @@ export default function ClientesPage() {
             ))}
           </div>
         </>
+      )}
+
+      {showForm && (
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h2 className="font-extrabold text-gray-900">
+                {editingId ? 'Editar cliente' : 'Nuevo cliente'}
+              </h2>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+              {error && <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre *</label>
+                <input
+                  type="text"
+                  required
+                  value={form.first_name}
+                  onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                  placeholder="Geronimo"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Apellido *</label>
+                <input
+                  type="text"
+                  required
+                  value={form.last_name}
+                  onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                  placeholder="Mendez"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">DNI *</label>
+                <input
+                  type="text"
+                  required
+                  value={form.dni}
+                  onChange={(e) => setForm({ ...form, dni: e.target.value })}
+                  placeholder="41601961"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Teléfono *</label>
+                <input
+                  type="tel"
+                  required
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="3492 330291"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Dirección</label>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  placeholder="Las Violetas 141"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 text-white font-bold py-3 rounded-xl transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                {busy ? 'Guardando…' : 'Guardar cliente'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
