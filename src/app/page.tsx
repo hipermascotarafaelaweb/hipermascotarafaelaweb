@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Truck, ShieldCheck, MessageCircle, PawPrint, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Truck, MessageCircle, PawPrint, ShoppingBag } from 'lucide-react';
 import FeaturedProducts from '@/components/FeaturedProducts';
 
 const WHATSAPP = '5493492330291';
@@ -58,48 +58,6 @@ export default function HomePage() {
 
       {/* Categorías + Destacados (carga desde Supabase en el cliente) */}
       <FeaturedProducts />
-
-      {/* Beneficios */}
-      <section className="bg-gradient-to-b from-white to-brand-50/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 font-logo">
-              ¿Por qué elegirnos?
-            </h2>
-            <p className="text-gray-500">Comprar para tu mascota nunca fue tan simple</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Truck,
-                title: 'Envío gratis',
-                text: 'Te lo llevamos a domicilio sin costo, a toda Rafaela.',
-              },
-              {
-                icon: ShieldCheck,
-                title: 'Calidad garantizada',
-                text: 'Accesorios resistentes y seguros, elegidos uno por uno.',
-              },
-              {
-                icon: ShoppingBag,
-                title: 'Compra simple',
-                text: 'Sin registros ni pasarelas. Elegí, pedí y listo.',
-              },
-            ].map((b) => (
-              <div
-                key={b.title}
-                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-center hover:shadow-md hover:-translate-y-0.5 transition-all"
-              >
-                <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                  <b.icon className="w-8 h-8 text-brand-600" />
-                </div>
-                <h3 className="font-extrabold text-gray-900 text-lg mb-2">{b.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{b.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Cómo comprar */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
