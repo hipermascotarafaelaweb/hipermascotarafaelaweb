@@ -71,6 +71,14 @@ export default function Footer() {
         <div className="mt-12 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
           <span>&copy; {new Date().getFullYear()} {SITE.name}.</span>
           <span className="tracking-wider text-xs">Accesorios para Mascotas</span>
+          <a
+            href="https://www.linkedin.com/in/geromendez-/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-gray-400 hover:text-brand-400 transition-colors font-medium"
+          >
+            Developed by Gero
+          </a>
         </div>
       </div>
     </footer>
