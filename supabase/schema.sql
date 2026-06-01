@@ -116,6 +116,15 @@ create policy "admin clientes" on customers for select using (auth.role() = 'aut
 drop policy if exists "admin pedidos" on orders;
 create policy "admin pedidos" on orders for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
+-- Cupones (RLS)
+alter table coupons enable row level security;
+
+drop policy if exists "lectura cupones activos" on coupons;
+create policy "lectura cupones activos" on coupons for select using (active = true and valid_from <= now() and (valid_until is null or valid_until > now()));
+
+drop policy if exists "admin cupones" on coupons;
+create policy "admin cupones" on coupons for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
 -- ============================================================
 --  STORAGE (bucket "products" para las fotos)
 --  Antes creá el bucket "products" como público desde Storage.
@@ -185,6 +194,36 @@ begin
   returning * into new_order;
 
   return to_jsonb(new_order);
+end;
+$$;
+
+-- ============================================================
+--  FUNCIÓN: incrementar uso del cupón atómicamente
+-- ============================================================
+create or replace function public.increment_coupon_use(coupon_id bigint)
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  coupon coupons%rowtype;
+begin
+  select * into coupon from coupons where id = coupon_id for update;
+
+  if coupon is null then
+    raise exception 'Cupón no encontrado';
+  end if;
+
+  if coupon.max_uses is not null and coupon.uses_count >= coupon.max_uses then
+    raise exception 'Cupón agotado';
+  end if;
+
+  update coupons
+  set uses_count = uses_count + 1
+  where id = coupon_id
+  returning * into coupon;
+
+  return to_jsonb(coupon);
 end;
 $$;
 

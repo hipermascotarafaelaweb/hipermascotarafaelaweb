@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { ArrowRight, Truck, MessageCircle, PawPrint, ShoppingBag } from 'lucide-react';
 import FeaturedProducts from '@/components/FeaturedProducts';
+import { whatsappLink } from '@/config/site';
 
-const WHATSAPP = '5493492330291';
+export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   return (
@@ -36,7 +38,7 @@ export default function HomePage() {
               <ArrowRight className="w-5 h-5" />
             </Link>
             <a
-              href={`https://wa.me/${WHATSAPP}`}
+              href={whatsappLink()}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-brand-400 text-gray-700 font-bold px-8 py-4 rounded-2xl text-lg transition-all"
@@ -48,8 +50,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categorías + Destacados (carga desde Supabase en el cliente) */}
-      <FeaturedProducts />
+      {/* Categorías + Destacados */}
+      <Suspense fallback={<div className="h-96 bg-gray-50" />}>
+        <FeaturedProducts />
+      </Suspense>
 
       {/* Cómo comprar */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">

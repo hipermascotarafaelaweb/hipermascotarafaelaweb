@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import type { CartItem, CustomerInput, Coupon } from '@/types';
 import { Resend } from 'resend';
 
+interface CartItem {
+  product_id: number;
+  name: string;
+  qty: number;
+  price: number;
+}
+
 const RATE_LIMIT_REQUESTS = 5;
-const RATE_LIMIT_WINDOW_MS = 3600000; // 1 hour
+const RATE_LIMIT_WINDOW_MS = 3600000;
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 function getClientIp(request: NextRequest): string {
@@ -26,14 +32,30 @@ function checkRateLimit(ip: string): boolean {
   }
 
   entry.count++;
+
+  if (rateLimitMap.size > 500) {
+    const firstKey = rateLimitMap.keys().next().value;
+    if (firstKey !== undefined) {
+      rateLimitMap.delete(firstKey);
+    }
+  }
+
   return true;
 }
 
-function getSupabase() {
+function asInt(value: unknown): number {
+  const num = typeof value === 'number' ? value : parseInt(String(value), 10);
+  if (!Number.isInteger(num) || num < 0) {
+    throw new Error('Invalid integer value');
+  }
+  return num;
+}
+
+function getSupabase(useServiceRole: boolean = true) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const key = serviceKey || anonKey;
+  const key = useServiceRole
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
+    : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     throw new Error('Missing Supabase configuration');
@@ -42,29 +64,26 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-async function sendOrderEmail(
-  orderData: {
-    id: number;
-    customer_name: string;
-    customer_phone: string;
-    customer_address: string;
-    items: Array<{ name: string; qty: number; price: number }>;
-    total_amount: number;
-    coupon_code: string | null;
-    coupon_discount: number;
-  }
-) {
+async function sendOrderEmail(orderData: {
+  id: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  items: CartItem[];
+  total_amount: number;
+  coupon_code: string | null;
+  coupon_discount: number;
+}) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.NEXT_PUBLIC_OWNER_EMAIL || 'owner@hipermascota.com';
 
   if (!resendApiKey) {
-    console.log('Resend API key not configured, skipping email notification');
+    console.log('Resend API key not configured, skipping email');
     return;
   }
 
   try {
     const resend = new Resend(resendApiKey);
-
     const itemsList = orderData.items
       .map((item) => `${item.qty}x ${item.name} - $${item.price}`)
       .join('\n');
@@ -94,61 +113,146 @@ Estado: Pendiente
       text: emailContent,
     });
   } catch (error) {
-    console.error('Failed to send order email:', error);
+    console.error('Email error:', error);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request);
-
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
-        { error: 'Demasiados pedidos. Esperá un poco antes de hacer otro pedido.' },
+        { error: 'Demasiados pedidos. Esperá un poco.' },
         { status: 429 }
       );
     }
 
     const body = await request.json();
-    const { items, customer, coupon, finalTotal, couponDiscount } = body;
+    const { items, customer, couponCode } = body;
 
-    if (!items || !customer || finalTotal === undefined) {
-      return NextResponse.json({ error: 'Datos del pedido incompletos' }, { status: 400 });
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'Carrito vacío' }, { status: 400 });
+    }
+
+    if (!customer || typeof customer !== 'object') {
+      return NextResponse.json({ error: 'Datos del cliente inválidos' }, { status: 400 });
+    }
+
+    if (!/^\d{7,9}$/.test(customer.dni)) {
+      return NextResponse.json({ error: 'DNI inválido' }, { status: 400 });
+    }
+
+    if (
+      !customer.first_name ||
+      !customer.last_name ||
+      !customer.phone ||
+      !customer.address
+    ) {
+      return NextResponse.json(
+        { error: 'Datos del cliente incompletos' },
+        { status: 400 }
+      );
     }
 
     const supabase = getSupabase();
 
-    const orderItems = items.map((i: CartItem) => ({
-      product_id: i.product.id,
-      name: i.product.name,
-      qty: i.quantity,
-      price: i.product.price,
-    }));
+    const productIds = items.map((i: any) => asInt(i.product_id));
 
-    // Create the order
-    const { error: orderError } = await supabase
-      .from('orders')
-      .insert({
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('id, name, price, sale_price')
+      .in('id', productIds);
+
+    if (productsError || !products) {
+      return NextResponse.json(
+        { error: 'Error al validar productos' },
+        { status: 500 }
+      );
+    }
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    let subtotal = 0;
+    const orderItems: CartItem[] = [];
+
+    for (const item of items) {
+      const productId = asInt(item.product_id);
+      const qty = asInt(item.qty);
+      const product = productMap.get(productId);
+
+      if (!product) {
+        return NextResponse.json(
+          { error: `Producto ${productId} no encontrado` },
+          { status: 400 }
+        );
+      }
+
+      const price = product.sale_price ?? product.price;
+      subtotal += price * qty;
+
+      orderItems.push({
+        product_id: productId,
+        name: product.name,
+        qty,
+        price,
+      });
+    }
+
+    let couponDiscount = 0;
+    let couponId: number | null = null;
+
+    if (couponCode && typeof couponCode === 'string') {
+      const { data: coupon, error: couponError } = await supabase
+        .from('coupons')
+        .select('id, discount_percent, max_uses, uses_count')
+        .eq('code', couponCode)
+        .eq('active', true)
+        .single();
+
+      if (couponError || !coupon) {
+        return NextResponse.json({ error: 'Cupón inválido' }, { status: 400 });
+      }
+
+      if (coupon.max_uses && coupon.uses_count >= coupon.max_uses) {
+        return NextResponse.json({ error: 'Cupón agotado' }, { status: 400 });
+      }
+
+      couponDiscount = Math.round((subtotal * coupon.discount_percent) / 100);
+      couponId = coupon.id;
+    }
+
+    const totalAmount = subtotal - couponDiscount;
+
+    if (totalAmount <= 0) {
+      return NextResponse.json(
+        { error: 'Total inválido' },
+        { status: 400 }
+      );
+    }
+
+    const { data: order, error: orderError } = await supabase.rpc(
+      'create_order_with_stock',
+      {
         customer_name: `${customer.first_name} ${customer.last_name}`,
         customer_dni: customer.dni,
         customer_phone: customer.phone,
         customer_address: customer.address,
         items: orderItems,
-        total_amount: finalTotal,
-        coupon_code: coupon?.code || null,
-        coupon_discount: couponDiscount || 0,
+        total_amount: totalAmount,
+        coupon_code: couponCode || null,
+        coupon_discount: couponDiscount,
         status: 'Pendiente',
-      });
+      }
+    );
 
     if (orderError) {
-      console.error('Order creation error:', JSON.stringify(orderError));
+      console.error('Order RPC error:', orderError);
       return NextResponse.json(
-        { error: `Error al crear el pedido: ${orderError.message}` },
+        { error: 'Error al crear pedido' },
         { status: 500 }
       );
     }
 
-    // Save customer
     await supabase.from('customers').upsert(
       {
         dni: customer.dni,
@@ -157,26 +261,46 @@ export async function POST(request: NextRequest) {
         phone: customer.phone,
         address: customer.address,
       },
-      { onConflict: 'dni', ignoreDuplicates: true }
+      { onConflict: 'dni', ignoreDuplicates: false }
     );
 
-    // Increment coupon usage
-    if (coupon?.id) {
-      await supabase
-        .from('coupons')
-        .update({ uses_count: coupon.uses_count + 1 })
-        .eq('id', coupon.id);
+    if (couponId) {
+      const { error: couponError } = await supabase.rpc(
+        'increment_coupon_use',
+        { coupon_id: couponId }
+      );
+      if (couponError) {
+        console.error('Coupon increment error:', couponError);
+      }
     }
 
+    await sendOrderEmail({
+      id: order.id,
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      customer_address: order.customer_address,
+      items: orderItems,
+      total_amount: order.total_amount,
+      coupon_code: order.coupon_code,
+      coupon_discount: order.coupon_discount,
+    });
+
     return NextResponse.json(
-      { success: true },
+      {
+        success: true,
+        order: {
+          id: order.id,
+          subtotal,
+          couponDiscount,
+          total: totalAmount,
+        },
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error('Checkout error:', error);
-    const message = error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
-      { error: `Error del servidor: ${message}` },
+      { error: 'Error del servidor' },
       { status: 500 }
     );
   }

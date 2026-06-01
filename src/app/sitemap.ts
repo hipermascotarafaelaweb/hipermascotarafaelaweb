@@ -1,13 +1,12 @@
 import type { MetadataRoute } from 'next';
-
-const BASE = 'https://hipermascotarafaelaweb.vercel.app';
+import { SITE } from '@/config/site';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
-    { url: BASE, changeFrequency: 'weekly', priority: 1 },
-    { url: `${BASE}/productos`, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE}/historial`, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${BASE}/contacto`, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${BASE}/privacidad`, changeFrequency: 'yearly', priority: 0.2 },
+    { url: SITE.url, changeFrequency: 'weekly', priority: 1 },
+    { url: `${SITE.url}/productos`, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${SITE.url}/historial`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE.url}/contacto`, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE.url}/privacidad`, changeFrequency: 'yearly', priority: 0.2 },
   ];
 }

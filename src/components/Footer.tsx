@@ -1,8 +1,7 @@
 import { MapPin, Clock, Phone } from 'lucide-react';
 import Link from 'next/link';
 import Logo from './Logo';
-
-const WHATSAPP = '5493492330291';
+import { SITE, whatsappLink } from '@/config/site';
 
 export default function Footer() {
   return (
@@ -12,7 +11,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <Logo className="text-2xl" stacked light icon />
             <p className="text-sm text-gray-400 mt-4 leading-relaxed">
-              Accesorios para perros y gatos en Rafaela, Santa Fe. Calidad y
+              Accesorios para perros y gatos en {SITE.city}, {SITE.state}. Calidad y
               atención personalizada, con envío gratis a domicilio.
             </p>
           </div>
@@ -37,17 +36,17 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4 text-brand-500 shrink-0" />
-                Rafaela, Santa Fe
+                {SITE.city}, {SITE.state}
               </li>
               <li>
                 <a
-                  href={`https://wa.me/${WHATSAPP}`}
+                  href={whatsappLink()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2.5 hover:text-brand-400 transition-colors"
                 >
                   <Phone className="w-4 h-4 text-brand-500 shrink-0" />
-                  3492 330291
+                  {SITE.phoneDisplay}
                 </a>
               </li>
             </ul>
@@ -70,7 +69,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
-          <span>&copy; {new Date().getFullYear()} Hipermascota Rafaela.</span>
+          <span>&copy; {new Date().getFullYear()} {SITE.name}.</span>
           <span className="tracking-wider text-xs">Accesorios para Mascotas</span>
         </div>
       </div>

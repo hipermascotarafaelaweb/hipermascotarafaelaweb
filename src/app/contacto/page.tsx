@@ -1,11 +1,10 @@
 import { MapPin, Phone, Clock, MessageCircle, Truck } from 'lucide-react';
+import { SITE, whatsappLink } from '@/config/site';
 
 export const metadata = {
-  title: 'Contacto | Hipermascota Rafaela',
-  description: 'Contactanos por WhatsApp. Envío gratis a domicilio en Rafaela.',
+  title: `Contacto | ${SITE.name}`,
+  description: `Contactanos por WhatsApp. Envío gratis a domicilio en ${SITE.city}.`,
 };
-
-const WHATSAPP = '5493492330291';
 
 export default function ContactoPage() {
   return (
@@ -23,7 +22,7 @@ export default function ContactoPage() {
 
           <div className="space-y-5">
             {[
-              { icon: MapPin, title: 'Ubicación', value: 'Rafaela, Santa Fe, Argentina' },
+              { icon: MapPin, title: 'Ubicación', value: `${SITE.city}, ${SITE.state}, ${SITE.country}` },
               { icon: Truck, title: 'Envíos', value: 'A domicilio y siempre gratis' },
               { icon: Clock, title: 'Horarios', value: 'Lunes a Sábado: 9:00 - 19:00' },
             ].map((row) => (
@@ -45,12 +44,12 @@ export default function ContactoPage() {
               <div>
                 <p className="font-bold text-gray-900">WhatsApp</p>
                 <a
-                  href={`https://wa.me/${WHATSAPP}`}
+                  href={whatsappLink()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-brand-700 hover:text-brand-800 font-semibold"
                 >
-                  3492 330291
+                  {SITE.phoneDisplay}
                 </a>
               </div>
             </div>
@@ -58,7 +57,7 @@ export default function ContactoPage() {
           </div>
 
           <p className="text-xs text-gray-400 pt-4 border-t border-gray-100">
-            Atiende: Mariano Ruffino
+            Atiende: {SITE.ownerName}
           </p>
         </div>
 
@@ -69,7 +68,7 @@ export default function ContactoPage() {
             Escribinos por WhatsApp y te respondemos al instante. ¡Estamos para ayudarte!
           </p>
           <a
-            href={`https://wa.me/${WHATSAPP}`}
+            href={whatsappLink()}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-white text-brand-700 font-bold px-8 py-3.5 rounded-2xl hover:bg-brand-50 transition-colors"

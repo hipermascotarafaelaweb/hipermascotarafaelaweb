@@ -10,6 +10,7 @@ export interface Toast {
 }
 
 let toastListeners: Set<(toast: Toast) => void> = new Set();
+let removeListeners: Set<(id: string) => void> = new Set();
 let toastId = 0;
 
 export function useToast() {
@@ -44,6 +45,13 @@ export function subscribeToToasts(listener: (toast: Toast) => void) {
   };
 }
 
+export function subscribeToToastRemovals(listener: (id: string) => void) {
+  removeListeners.add(listener);
+  return () => {
+    removeListeners.delete(listener);
+  };
+}
+
 function removeToast(id: string) {
-  // This is handled by the ToastContainer component
+  removeListeners.forEach((listener) => listener(id));
 }

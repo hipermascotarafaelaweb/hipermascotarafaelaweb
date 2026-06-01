@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { subscribeToToasts, type Toast } from '@/hooks/useToast';
+import { subscribeToToasts, subscribeToToastRemovals, type Toast } from '@/hooks/useToast';
 import { AlertCircle, CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 
 const iconMap = {
@@ -22,11 +22,18 @@ export default function ToastContainer() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   useEffect(() => {
-    const unsubscribe = subscribeToToasts((toast) => {
+    const unsubscribeAdd = subscribeToToasts((toast) => {
       setToasts((prev) => [...prev, toast]);
     });
 
-    return unsubscribe;
+    const unsubscribeRemove = subscribeToToastRemovals((id) => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    });
+
+    return () => {
+      unsubscribeAdd();
+      unsubscribeRemove();
+    };
   }, []);
 
   const removeToast = (id: string) => {

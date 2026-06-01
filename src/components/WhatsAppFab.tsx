@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
+import { whatsappLink } from '@/config/site';
 import { cn } from '@/utils/cn';
-
-const WHATSAPP = '5493492330291';
 const DEFAULT_MSG =
   '🐾 ¡Hola Hipermascota! Quería hacer una consulta sobre sus productos.';
 
@@ -25,7 +24,7 @@ export default function WhatsAppFab() {
 
   return (
     <a
-      href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(DEFAULT_MSG)}`}
+      href={whatsappLink(DEFAULT_MSG)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Escribinos por WhatsApp"

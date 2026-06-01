@@ -1,15 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   X, Minus, Plus, Trash2, MessageCircle, ShoppingBag, PawPrint,
-  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper, Ticket, Check, AlertCircle,
+  ArrowLeft, ArrowRight, Truck, CheckCircle2, PartyPopper, Check, AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { useCustomerStore } from '@/store/customer';
 import { generateWhatsAppLink } from '@/utils/whatsapp';
-import { createClient } from '@/utils/supabase/client';
 import { formatPrice, effectivePrice, hasDiscount } from '@/utils/format';
 import { useToast } from '@/hooks/useToast';
 import type { CustomerInput, Coupon } from '@/types';
@@ -61,54 +60,36 @@ export default function CartDrawer({
     }
     setApplyingCoupon(true);
     setCouponError('');
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .eq('code', couponCode.toUpperCase())
-      .single();
-    setApplyingCoupon(false);
-    if (error || !data) {
-      setCouponError('Código inválido.');
-      return;
+    try {
+      const code = couponCode.trim().toUpperCase();
+      setCoupon({
+        id: Math.random(),
+        code: code,
+        discount_percent: 10,
+        max_uses: null,
+        uses_count: 0,
+        valid_from: new Date().toISOString(),
+        valid_until: null,
+        active: true,
+        created_at: new Date().toISOString(),
+      });
+      setCouponCode('');
+    } catch (error) {
+      setCouponError('Error al aplicar código.');
+    } finally {
+      setApplyingCoupon(false);
     }
-    const c = data as Coupon;
-    if (!c.active) {
-      setCouponError('Cupón inactivo.');
-      return;
-    }
-    if (c.valid_until && new Date(c.valid_until) < new Date()) {
-      setCouponError('Cupón expirado.');
-      return;
-    }
-    if (c.max_uses && c.uses_count >= c.max_uses) {
-      setCouponError('Cupón agotado.');
-      return;
-    }
-    setCoupon(c);
-    setCouponCode('');
   };
 
-  const fetchCustomerByDni = async (dni: string) => {
-    if (!dni.trim()) return;
-    setLoadingCustomer(true);
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('dni', dni.trim())
-      .single();
-    setLoadingCustomer(false);
-    if (data) {
-      setCustomer({
-        first_name: data.first_name,
-        last_name: data.last_name,
-        dni: data.dni,
-        phone: data.phone,
-        address: data.address || '',
-      });
-    }
-  };
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleEscapeKey);
+    return () => window.removeEventListener('keydown', handleEscapeKey);
+  }, [open]);
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof CustomerInput, string>> = {};
@@ -135,24 +116,30 @@ export default function CartDrawer({
     };
 
     try {
+      const checkoutItems = items.map((i) => ({
+        product_id: i.product.id,
+        qty: i.quantity,
+      }));
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items,
+          items: checkoutItems,
           customer: clean,
-          coupon,
-          finalTotal,
-          couponDiscount,
+          couponCode: coupon?.code || null,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create order');
+        throw new Error(data.error || 'Error al crear pedido');
       }
 
-      const link = generateWhatsAppLink(items, finalTotal, clean, couponDiscount, coupon?.code);
+      const result = await response.json();
+      const serverTotal = result.order.total;
+
+      const link = generateWhatsAppLink(items, serverTotal, clean, result.order.couponDiscount, coupon?.code);
       window.open(link, '_blank');
 
       clearCart();
@@ -421,17 +408,10 @@ export default function CartDrawer({
                   <label className="block text-sm font-semibold text-gray-700 mb-1">DNI</label>
                   <input
                     value={customer.dni}
-                    onChange={(e) => {
-                      const dni = e.target.value;
-                      setCustomer({ dni });
-                      if (dni.length >= 7) {
-                        fetchCustomerByDni(dni);
-                      }
-                    }}
+                    onChange={(e) => setCustomer({ dni: e.target.value })}
                     placeholder="30123456"
                     inputMode="numeric"
-                    disabled={loadingCustomer}
-                    className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-gray-100 ${
+                    className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ${
                       errors.dni ? 'border-red-400' : 'border-gray-200'
                     }`}
                   />

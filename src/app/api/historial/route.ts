@@ -1,0 +1,98 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const rateLimitMap = new Map<string, number[]>();
+
+function getRateLimitKey(dni: string, ip: string): string {
+  return `${dni}:${ip}`;
+}
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const times = rateLimitMap.get(key) || [];
+
+  const recentRequests = times.filter((t) => now - t < 60000);
+
+  if (recentRequests.length >= 5) {
+    return true;
+  }
+
+  if (recentRequests.length > 0) {
+    rateLimitMap.set(key, recentRequests);
+    recentRequests.push(now);
+  } else {
+    rateLimitMap.set(key, [now]);
+  }
+
+  if (rateLimitMap.size > 500) {
+    const oldestKey = rateLimitMap.keys().next().value;
+    if (oldestKey !== undefined) {
+      rateLimitMap.delete(oldestKey);
+    }
+  }
+
+  return false;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { dni } = body;
+
+    if (!dni || typeof dni !== 'string') {
+      return NextResponse.json(
+        { error: 'DNI requerido' },
+        { status: 400 }
+      );
+    }
+
+    if (!/^\d{7,9}$/.test(dni)) {
+      return NextResponse.json(
+        { error: 'DNI inválido' },
+        { status: 400 }
+      );
+    }
+
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0].trim() || 'unknown';
+    const key = getRateLimitKey(dni, ip);
+
+    if (isRateLimited(key)) {
+      return NextResponse.json(
+        { error: 'Demasiadas solicitudes. Intenta más tarde.' },
+        { status: 429 }
+      );
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('id, dni, created_at, total, status')
+      .eq('dni', dni)
+      .eq('status', 'Entregado')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      return NextResponse.json(
+        { error: 'Error al buscar pedidos' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      orders: orders || [],
+    });
+  } catch (error) {
+    console.error('historial error:', error);
+    return NextResponse.json(
+      { error: 'Error al procesar solicitud' },
+      { status: 500 }
+    );
+  }
+}

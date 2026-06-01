@@ -22,6 +22,13 @@ const emptyForm: CustomerForm = {
   address: '',
 };
 
+function csvCell(value: string): string {
+  if (/^[=+\-@]/.test(value)) {
+    return `'${value.replace(/"/g, '""')}'`;
+  }
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
 function downloadCSV(customers: Customer[]) {
   const headers = ['DNI', 'Nombre', 'Apellido', 'Teléfono', 'Dirección', 'Registrado'];
   const rows = customers.map((c) => [
@@ -32,12 +39,14 @@ function downloadCSV(customers: Customer[]) {
     c.address || '',
     formatDate(c.created_at),
   ]);
-  const csv = [headers, ...rows].map((r) => r.map((cell) => `"${cell}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const csvContent = [headers, ...rows].map((r) => r.map(csvCell).join(',')).join('\n');
+  const bom = '﻿';
+  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = `clientes-${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 export default function ClientesPage() {

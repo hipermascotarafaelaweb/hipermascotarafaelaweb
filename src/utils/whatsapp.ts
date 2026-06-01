@@ -1,7 +1,6 @@
 import type { CartItem, CustomerInput } from '@/types';
 import { effectivePrice } from '@/utils/format';
-
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5493492330291';
+import { SITE } from '@/config/site';
 
 function formatNumber(price: number): string {
   return price.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -49,5 +48,5 @@ ${itemLines}
 
 ¿Me confirman la disponibilidad para coordinar el envío? ¡Muchas gracias!`;
 
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${SITE.phoneNumber}?text=${encodeURIComponent(message)}`;
 }

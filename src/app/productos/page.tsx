@@ -7,7 +7,14 @@ export const metadata = {
     'Catálogo completo de accesorios para perros y gatos: collares, juguetes, comederos, camas y más. Envío gratis y pedido por WhatsApp.',
 };
 
-export default function ProductosPage() {
+interface ProductosPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function ProductosPage({ searchParams }: ProductosPageProps) {
+  const params = await searchParams;
+  const initialCategory = (params.categoria as string) || 'all';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
@@ -16,8 +23,8 @@ export default function ProductosPage() {
         </h1>
         <p className="text-gray-500 mt-1">Elegí lo que necesitás y sumalo a tu pedido.</p>
       </div>
-      <Suspense>
-        <ProductosClient />
+      <Suspense fallback={<div className="h-96 bg-gray-50 rounded-2xl animate-pulse" />}>
+        <ProductosClient initialCategory={initialCategory} />
       </Suspense>
     </div>
   );
