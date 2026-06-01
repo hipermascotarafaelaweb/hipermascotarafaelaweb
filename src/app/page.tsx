@@ -49,10 +49,6 @@ export default function HomePage() {
               Escribinos
             </a>
           </div>
-          <p className="mt-6 inline-flex items-center gap-2 text-brand-700 font-semibold">
-            <Truck className="w-5 h-5" />
-            Envío gratis a domicilio en Rafaela
-          </p>
         </div>
       </section>
 
