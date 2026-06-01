@@ -72,7 +72,7 @@ export default function Footer() {
           <span>&copy; {new Date().getFullYear()} {SITE.name}.</span>
           <span className="tracking-wider text-xs">Accesorios para Mascotas</span>
           <a
-            href="https://www.linkedin.com/in/geromendez-/"
+            href="https://www.linkedin.com/in/-geromendez-/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-gray-400 hover:text-brand-400 transition-colors font-medium"
