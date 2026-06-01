@@ -83,25 +83,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Final */}
-      <section className="bg-brand-600 relative overflow-hidden">
-        <PawPrint className="absolute -bottom-8 -right-8 w-48 h-48 text-brand-500/40 rotate-12" />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center relative">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 font-logo">
-            ¿Listo para mimar a tu mascota?
-          </h2>
-          <p className="text-brand-50 text-lg mb-8 max-w-xl mx-auto">
-            Explorá el catálogo completo y armá tu pedido. ¡Te esperamos!
-          </p>
-          <Link
-            href="/productos"
-            className="inline-flex items-center gap-2 bg-white text-brand-700 font-bold px-8 py-4 rounded-2xl text-lg hover:bg-brand-50 transition-colors"
-          >
-            Ver catálogo
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-        </div>
-      </section>
     </>
   );
 }
