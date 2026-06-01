@@ -23,10 +23,11 @@ const emptyForm: CustomerForm = {
 };
 
 function csvCell(value: string): string {
-  if (/^[=+\-@]/.test(value)) {
-    return `'${value.replace(/"/g, '""')}'`;
+  const escaped = value.replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(escaped)) {
+    return `"'${escaped}"`;
   }
-  return `"${value.replace(/"/g, '""')}"`;
+  return `"${escaped}"`;
 }
 
 function downloadCSV(customers: Customer[]) {

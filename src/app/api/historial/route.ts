@@ -17,12 +17,8 @@ function isRateLimited(key: string): boolean {
     return true;
   }
 
-  if (recentRequests.length > 0) {
-    rateLimitMap.set(key, recentRequests);
-    recentRequests.push(now);
-  } else {
-    rateLimitMap.set(key, [now]);
-  }
+  recentRequests.push(now);
+  rateLimitMap.set(key, recentRequests);
 
   if (rateLimitMap.size > 500) {
     const oldestKey = rateLimitMap.keys().next().value;
@@ -71,8 +67,8 @@ export async function POST(request: NextRequest) {
 
     const { data: orders, error } = await supabase
       .from('orders')
-      .select('id, dni, created_at, total, status')
-      .eq('dni', dni)
+      .select('id, customer_dni, created_at, total_amount, status')
+      .eq('customer_dni', dni)
       .eq('status', 'Entregado')
       .order('created_at', { ascending: false })
       .limit(100);

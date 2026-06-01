@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
     }
 
     let couponDiscount = 0;
-    let couponId: number | null = null;
+    let couponIncremented = false;
 
     if (couponCode && typeof couponCode === 'string') {
       const { data: coupon, error: couponError } = await supabase
@@ -213,12 +213,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Cupón inválido' }, { status: 400 });
       }
 
-      if (coupon.max_uses && coupon.uses_count >= coupon.max_uses) {
+      const { error: incError } = await supabase.rpc(
+        'increment_coupon_use',
+        { coupon_id: coupon.id }
+      );
+
+      if (incError) {
         return NextResponse.json({ error: 'Cupón agotado' }, { status: 400 });
       }
 
+      couponIncremented = true;
       couponDiscount = Math.round((subtotal * coupon.discount_percent) / 100);
-      couponId = coupon.id;
     }
 
     const totalAmount = subtotal - couponDiscount;
@@ -245,13 +250,16 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    if (orderError) {
+    if (orderError || !order) {
       console.error('Order RPC error:', orderError);
       return NextResponse.json(
         { error: 'Error al crear pedido' },
         { status: 500 }
       );
     }
+
+    const customerFullName = `${customer.first_name} ${customer.last_name}`;
+    const orderId = order.id ?? 0;
 
     await supabase.from('customers').upsert(
       {
@@ -261,35 +269,25 @@ export async function POST(request: NextRequest) {
         phone: customer.phone,
         address: customer.address,
       },
-      { onConflict: 'dni', ignoreDuplicates: false }
+      { onConflict: 'dni', ignoreDuplicates: true }
     );
 
-    if (couponId) {
-      const { error: couponError } = await supabase.rpc(
-        'increment_coupon_use',
-        { coupon_id: couponId }
-      );
-      if (couponError) {
-        console.error('Coupon increment error:', couponError);
-      }
-    }
-
     await sendOrderEmail({
-      id: order.id,
-      customer_name: order.customer_name,
-      customer_phone: order.customer_phone,
-      customer_address: order.customer_address,
+      id: orderId,
+      customer_name: customerFullName,
+      customer_phone: customer.phone,
+      customer_address: customer.address,
       items: orderItems,
-      total_amount: order.total_amount,
-      coupon_code: order.coupon_code,
-      coupon_discount: order.coupon_discount,
+      total_amount: totalAmount,
+      coupon_code: couponCode || null,
+      coupon_discount: couponDiscount,
     });
 
     return NextResponse.json(
       {
         success: true,
         order: {
-          id: order.id,
+          id: orderId,
           subtotal,
           couponDiscount,
           total: totalAmount,

@@ -41,7 +41,6 @@ export default function CartDrawer({
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
-  const [loadingCustomer, setLoadingCustomer] = useState(false);
 
   const total = totalPrice();
   const couponDiscount = coupon ? (total * coupon.discount_percent) / 100 : 0;
@@ -61,21 +60,20 @@ export default function CartDrawer({
     setApplyingCoupon(true);
     setCouponError('');
     try {
-      const code = couponCode.trim().toUpperCase();
-      setCoupon({
-        id: Math.random(),
-        code: code,
-        discount_percent: 10,
-        max_uses: null,
-        uses_count: 0,
-        valid_from: new Date().toISOString(),
-        valid_until: null,
-        active: true,
-        created_at: new Date().toISOString(),
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode.trim() }),
       });
+      const data = await response.json();
+      if (!response.ok) {
+        setCouponError(data.error || 'Código inválido.');
+        return;
+      }
+      setCoupon(data.coupon as Coupon);
       setCouponCode('');
-    } catch (error) {
-      setCouponError('Error al aplicar código.');
+    } catch {
+      setCouponError('Error al validar código.');
     } finally {
       setApplyingCoupon(false);
     }
@@ -84,12 +82,12 @@ export default function CartDrawer({
   useEffect(() => {
     const handleEscapeKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && open) {
-        handleClose();
+        onClose();
       }
     };
     window.addEventListener('keydown', handleEscapeKey);
     return () => window.removeEventListener('keydown', handleEscapeKey);
-  }, [open]);
+  }, [open, onClose]);
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof CustomerInput, string>> = {};
