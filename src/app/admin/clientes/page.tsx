@@ -298,7 +298,7 @@ export default function ClientesPage() {
                   required
                   value={form.first_name}
                   onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-                  placeholder="Geronimo"
+                  placeholder="Juan"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                 />
               </div>
@@ -310,7 +310,7 @@ export default function ClientesPage() {
                   required
                   value={form.last_name}
                   onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-                  placeholder="Mendez"
+                  placeholder="Perez"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                 />
               </div>
@@ -322,7 +322,7 @@ export default function ClientesPage() {
                   required
                   value={form.dni}
                   onChange={(e) => setForm({ ...form, dni: e.target.value })}
-                  placeholder="41601961"
+                  placeholder="12345678"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                 />
               </div>
@@ -334,7 +334,7 @@ export default function ClientesPage() {
                   required
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="3492 330291"
+                  placeholder="3492 123456"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                 />
               </div>
@@ -345,7 +345,7 @@ export default function ClientesPage() {
                   type="text"
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  placeholder="Las Violetas 141"
+                  placeholder="Av. Principal 123"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                 />
               </div>
