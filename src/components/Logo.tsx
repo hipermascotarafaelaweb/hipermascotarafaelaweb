@@ -24,12 +24,12 @@ export default function Logo({
       <Image
         src="/logohiper.svg"
         alt="Hipermascota Rafaela"
-        width={stacked ? 180 : 220}
-        height={stacked ? 78 : 50}
+        width={stacked ? 160 : 180}
+        height={stacked ? 69 : 40}
         className={cn(
-          'h-auto',
-          light && 'brightness-[1.3] contrast-[0.9]',
-          stacked ? 'w-40 sm:w-44' : 'w-36 sm:w-48'
+          'h-auto mix-blend-multiply',
+          light && 'mix-blend-normal brightness-[1.4] saturate-[1.2]',
+          stacked ? 'w-36' : 'h-10 w-auto'
         )}
         priority
       />
