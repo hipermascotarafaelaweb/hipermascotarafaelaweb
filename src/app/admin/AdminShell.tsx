@@ -39,7 +39,7 @@ export default function AdminShell({
       {/* Sidebar desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 fixed h-full">
         <div className="p-5 border-b border-gray-100">
-          <Logo className="text-lg" stacked icon />
+          <Logo className="h-14 w-auto" />
           <p className="text-xs text-gray-400 mt-3 font-medium">Panel de administración</p>
         </div>
 

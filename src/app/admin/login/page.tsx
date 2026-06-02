@@ -34,8 +34,8 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-white to-brand-100/40 px-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <Logo className="text-3xl justify-center" icon />
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Logo className="h-24 w-auto" />
           <div className="flex items-center justify-center gap-1.5 text-sm text-gray-500 mt-3">
             <Lock className="w-3.5 h-3.5" />
             Panel de administración

@@ -4,6 +4,8 @@ import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 
+const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
