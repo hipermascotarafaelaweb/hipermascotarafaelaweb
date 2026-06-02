@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Baloo_2, Itim } from 'next/font/google';
+import { Inter, Baloo_2, Itim, Nunito } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
@@ -15,11 +15,16 @@ const baloo = Baloo_2({
   variable: '--font-baloo',
 });
 
-// Tipografía del logotipo: trazo de marcador neto y redondeado, como la tarjeta.
 const itim = Itim({
   subsets: ['latin'],
   weight: '400',
   variable: '--font-itim',
+});
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  weight: ['800', '900'],
+  variable: '--font-nunito',
 });
 
 const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
@@ -65,7 +70,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${inter.variable} ${baloo.variable} ${itim.variable} h-full antialiased`}
+      className={`${inter.variable} ${baloo.variable} ${itim.variable} ${nunito.variable} h-full antialiased`}
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
