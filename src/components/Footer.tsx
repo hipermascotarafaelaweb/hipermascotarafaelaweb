@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-1">
-            <Logo className="text-2xl" stacked light icon />
+            <Logo className="h-20 w-auto" />
             <p className="text-sm text-gray-400 mt-4 leading-relaxed">
               Accesorios para perros y gatos en Rafaela, Santa Fe. Calidad y
               atención personalizada, con envío gratis a domicilio.
