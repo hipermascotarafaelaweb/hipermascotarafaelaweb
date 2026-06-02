@@ -29,8 +29,6 @@ const nunito = Nunito({
   variable: '--font-nunito',
 });
 
-const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
