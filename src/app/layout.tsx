@@ -4,6 +4,8 @@ import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 
+const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -54,8 +56,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#8dc63f',
 };
-
-const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
 
 export default function RootLayout({
   children,
