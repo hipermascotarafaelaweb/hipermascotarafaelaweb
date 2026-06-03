@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Search, PawPrint, Dog, Cat, PawPrint as PawIcon, SlidersHorizontal, X } from 'lucide-react';
-import type { Product, Category, PetType } from '@/types';
+import type { Product, Category, PetType, Promotion } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { cn } from '@/utils/cn';
 
@@ -19,10 +19,12 @@ export default function ProductGrid({
   products,
   categories,
   initialCategory = 'all',
+  promotionsByProductId = new Map(),
 }: {
   products: Product[];
   categories: Category[];
   initialCategory?: string;
+  promotionsByProductId?: Map<number, Promotion>;
 }) {
   const validInitial = categories.some((c) => c.slug === initialCategory)
     ? initialCategory
@@ -263,7 +265,12 @@ export default function ProductGrid({
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filtered.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              promotion={promotionsByProductId?.get(product.id)}
+              index={i}
+            />
           ))}
         </div>
       )}

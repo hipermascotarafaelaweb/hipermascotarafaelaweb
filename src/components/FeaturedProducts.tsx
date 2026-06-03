@@ -3,7 +3,7 @@ import { ArrowRight, Home, Link2, Radio, UtensilsCrossed, Droplets, Gamepad2, Wi
 import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ProductCard from '@/components/ProductCard';
-import type { Product, Category } from '@/types';
+import type { Product, Category, Promotion, PromotionProduct } from '@/types';
 
 const categoryIconMap: Record<string, any> = {
   'camas-y-cuchas': Home,
@@ -28,7 +28,9 @@ const fetchData = cache(async () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const [productsRes, categoriesRes] = await Promise.all([
+  const now = new Date().toISOString();
+
+  const [productsRes, categoriesRes, promotionsRes, promotionProductsRes] = await Promise.all([
     supabase
       .from('products')
       .select('*, category:categories(*)')
@@ -36,16 +38,37 @@ const fetchData = cache(async () => {
       .order('created_at', { ascending: false })
       .limit(8),
     supabase.from('categories').select('*').order('name'),
+    supabase
+      .from('promotions')
+      .select('*')
+      .eq('is_active', true)
+      .lte('valid_from', now)
+      .or(`valid_until.is.null,valid_until.gt.${now}`),
+    supabase
+      .from('promotion_products')
+      .select('*'),
   ]);
+
+  const promotions = (promotionsRes.data as Promotion[]) || [];
+  const promotionProducts = (promotionProductsRes.data as PromotionProduct[]) || [];
+
+  const promotionsByProductId = new Map<number, Promotion>();
+  promotionProducts.forEach(pp => {
+    const promotion = promotions.find(p => p.id === pp.promotion_id);
+    if (promotion) {
+      promotionsByProductId.set(pp.product_id, promotion);
+    }
+  });
 
   return {
     products: (productsRes.data as Product[]) || [],
     categories: (categoriesRes.data as Category[]) || [],
+    promotionsByProductId,
   };
 });
 
 export default async function FeaturedProducts() {
-  const { products, categories } = await fetchData();
+  const { products, categories, promotionsByProductId } = await fetchData();
 
   return (
     <>
@@ -99,7 +122,12 @@ export default async function FeaturedProducts() {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {products.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  promotion={promotionsByProductId.get(product.id)}
+                  index={i}
+                />
               ))}
             </div>
 

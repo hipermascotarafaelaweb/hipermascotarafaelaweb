@@ -4,12 +4,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, PawPrint, Check, Star, Tag } from 'lucide-react';
 import { useState } from 'react';
-import type { Product } from '@/types';
+import type { Product, Promotion } from '@/types';
 import { useCartStore } from '@/store/cart';
 import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/utils/format';
 import { cn } from '@/utils/cn';
+import PromotionBadge from './PromotionBadge';
+import { isPromotionActive } from '@/utils/promotions';
 
-export default function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
+export default function ProductCard({ product, promotion, index = 0 }: { product: Product; promotion?: Promotion; index?: number }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const outOfStock = product.stock <= 0;
@@ -43,7 +45,12 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
         )}
 
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-          {onSale && !outOfStock && (
+          {promotion && isPromotionActive(promotion) && !outOfStock && (
+            <div className="inline-block">
+              <PromotionBadge promotion={promotion} />
+            </div>
+          )}
+          {onSale && !outOfStock && !promotion && (
             <span className="bg-red-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
               <Tag className="w-3 h-3 fill-current" /> -{discountPercent(product)}%
             </span>
