@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { ArrowRight, Truck, MessageCircle, PawPrint, ShoppingBag } from 'lucide-react';
 import FeaturedProducts from '@/components/FeaturedProducts';
+import PromotionsSectionServer from '@/components/PromotionsSectionServer';
 import { whatsappLink } from '@/config/site';
 
 export const dynamic = 'force-dynamic';
@@ -53,6 +54,11 @@ export default function HomePage() {
       {/* Categorías + Destacados */}
       <Suspense fallback={<div className="h-96 bg-gray-50" />}>
         <FeaturedProducts />
+      </Suspense>
+
+      {/* Promociones */}
+      <Suspense fallback={null}>
+        <PromotionsSectionServer />
       </Suspense>
 
       {/* Cómo comprar */}

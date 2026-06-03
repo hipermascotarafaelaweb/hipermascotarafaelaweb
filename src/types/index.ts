@@ -82,3 +82,38 @@ export interface Coupon {
   active: boolean;
   created_at: string;
 }
+
+export interface Promotion {
+  id: number;
+  title: string;
+  description: string | null;
+  discount_percent: number | null;
+  discount_fixed: number | null;
+  discount_type: 'percent' | 'fixed';
+  image_url: string | null;
+  badge_label: string;
+  display_priority: number;
+  is_active: boolean;
+  valid_from: string;
+  valid_until: string | null;
+  created_at: string;
+}
+
+export interface PromotionWithProducts extends Promotion {
+  product_ids: number[];
+  category_ids: number[];
+}
+
+export interface PromotionProduct {
+  id: number;
+  promotion_id: number;
+  product_id: number;
+  created_at: string;
+}
+
+export interface PromotionCategory {
+  id: number;
+  promotion_id: number;
+  category_id: number;
+  created_at: string;
+}
