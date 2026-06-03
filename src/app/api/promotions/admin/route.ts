@@ -84,8 +84,9 @@ export async function POST(request: Request) {
     return Response.json({ success: true, promotion: data }, { status: 201 });
   } catch (error) {
     console.error('Error creating promotion:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create promotion';
     return Response.json(
-      { success: false, error: 'Failed to create promotion' },
+      { success: false, error: message },
       { status: 500 }
     );
   }
@@ -116,8 +117,9 @@ export async function PATCH(request: Request) {
     return Response.json({ success: true, promotion: data });
   } catch (error) {
     console.error('Error updating promotion:', error);
+    const message = error instanceof Error ? error.message : 'Failed to update promotion';
     return Response.json(
-      { success: false, error: 'Failed to update promotion' },
+      { success: false, error: message },
       { status: 500 }
     );
   }
@@ -135,8 +137,9 @@ export async function DELETE(request: Request) {
     return Response.json({ success: true });
   } catch (error) {
     console.error('Error deleting promotion:', error);
+    const message = error instanceof Error ? error.message : 'Failed to delete promotion';
     return Response.json(
-      { success: false, error: 'Failed to delete promotion' },
+      { success: false, error: message },
       { status: 500 }
     );
   }
