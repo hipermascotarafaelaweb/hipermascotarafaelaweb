@@ -16,6 +16,7 @@ export default function PromotionForm({
   onCancel,
 }: PromotionFormProps) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<number[]>(
     promotion?.product_ids || []
@@ -47,7 +48,29 @@ export default function PromotionForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
+
+    // Validación del descuento
+    if (formData.discount_type === 'percent') {
+      if (!formData.discount_percent || parseInt(formData.discount_percent) <= 0) {
+        setError('Ingresá un descuento válido (entre 1 y 100%)');
+        setLoading(false);
+        return;
+      }
+    } else {
+      if (!formData.discount_fixed || parseFloat(formData.discount_fixed) <= 0) {
+        setError('Ingresá un monto de descuento válido');
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (!formData.title.trim()) {
+      setError('El título es requerido');
+      setLoading(false);
+      return;
+    }
 
     try {
       const method = promotion ? 'PATCH' : 'POST';
@@ -66,9 +89,9 @@ export default function PromotionForm({
         body: JSON.stringify(body),
       });
 
-      if (!res.ok) throw new Error('Failed to save promotion');
-
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save promotion');
+
       const promotionId = data.promotion.id;
 
       // Link products to promotion
@@ -102,7 +125,7 @@ export default function PromotionForm({
       onSubmit();
     } catch (error) {
       console.error('Error saving promotion:', error);
-      alert('Error al guardar la promoción');
+      setError(error instanceof Error ? error.message : 'Error al guardar la promoción');
     } finally {
       setLoading(false);
     }
@@ -121,6 +144,12 @@ export default function PromotionForm({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm font-semibold">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-bold mb-2">Título *</label>
             <input
