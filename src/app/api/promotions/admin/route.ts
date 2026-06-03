@@ -59,6 +59,21 @@ export async function POST(request: Request) {
       valid_until,
     } = body;
 
+    // Validación básica
+    if (!title || !title.trim()) {
+      return Response.json(
+        { success: false, error: 'El título es requerido' },
+        { status: 400 }
+      );
+    }
+
+    if (!discount_type || (discount_type === 'percent' && !discount_percent) || (discount_type === 'fixed' && !discount_fixed)) {
+      return Response.json(
+        { success: false, error: 'Especifica un descuento válido' },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabase
       .from('promotions')
       .insert([
@@ -72,19 +87,27 @@ export async function POST(request: Request) {
           badge_label,
           display_priority,
           is_active,
-          valid_from,
+          valid_from: valid_from || new Date().toISOString(),
           valid_until,
         },
       ])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw new Error(error.message || 'Error al insertar promoción');
+    }
 
     return Response.json({ success: true, promotion: data }, { status: 201 });
   } catch (error) {
     console.error('Error creating promotion:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create promotion';
+    let message = 'Failed to create promotion';
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === 'object' && error !== null && 'message' in error) {
+      message = String((error as any).message);
+    }
     return Response.json(
       { success: false, error: message },
       { status: 500 }
