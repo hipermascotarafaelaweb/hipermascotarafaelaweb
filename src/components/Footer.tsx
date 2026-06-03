@@ -5,12 +5,12 @@ import { SITE, whatsappLink } from '@/config/site';
 
 export default function Footer() {
   return (
-    <footer className="mt-auto bg-white text-gray-900">
+    <footer className="mt-auto bg-green-100 text-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-1">
             <Logo className="h-20 w-auto" />
-            <p className="text-sm text-gray-600 mt-4 leading-relaxed">
+            <p className="text-sm text-gray-700 mt-4 leading-relaxed">
               Accesorios para perros y gatos en {SITE.city}, {SITE.state}. Calidad y
               atención personalizada, con envío gratis a domicilio.
             </p>
@@ -68,14 +68,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-600">
+        <div className="mt-12 pt-6 border-t border-green-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-700">
           <span>&copy; {new Date().getFullYear()} {SITE.name}.</span>
           <span className="tracking-wider text-xs">Accesorios para Mascotas</span>
           <a
             href="https://www.linkedin.com/in/-geromendez-/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-gray-600 hover:text-brand-400 transition-colors font-medium"
+            className="text-xs text-gray-700 hover:text-brand-400 transition-colors font-medium"
           >
             Developed by Gero
           </a>
