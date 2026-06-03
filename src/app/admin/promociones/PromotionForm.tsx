@@ -82,6 +82,8 @@ export default function PromotionForm({
           formData.discount_type === 'percent' ? parseInt(formData.discount_percent) : null,
         discount_fixed:
           formData.discount_type === 'fixed' ? parseFloat(formData.discount_fixed) : null,
+        valid_from: formData.valid_from ? new Date(formData.valid_from).toISOString() : new Date().toISOString(),
+        valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : null,
       };
 
       const res = await fetch(url, {

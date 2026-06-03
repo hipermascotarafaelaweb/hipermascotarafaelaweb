@@ -87,8 +87,8 @@ export async function POST(request: Request) {
           badge_label,
           display_priority,
           is_active,
-          valid_from: valid_from || new Date().toISOString(),
-          valid_until,
+          valid_from: valid_from && valid_from.trim() ? valid_from : new Date().toISOString(),
+          valid_until: valid_until && valid_until.trim() ? valid_until : null,
         },
       ])
       .select()
