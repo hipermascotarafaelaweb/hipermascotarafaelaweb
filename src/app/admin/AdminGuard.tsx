@@ -18,18 +18,16 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        // No hay usuario
-        if (!isLoginPage) {
-          router.replace('/admin/login');
-        }
+      if (data.user && isLoginPage) {
+        // Si hay usuario y estamos en login, ir a dashboard
+        router.push('/admin');
+      } else if (!data.user && !isLoginPage) {
+        // Si no hay usuario y NO estamos en login, ir a login (middleware lo redirecciona)
+        // Pero aquí solo seteamos loading en false
+        // El middleware ya lo redirecciona
       } else {
-        // Hay usuario
-        if (isLoginPage) {
-          router.replace('/admin');
-        } else {
-          setUser(data.user);
-        }
+        // En todos los otros casos, seteamos el usuario
+        setUser(data.user);
       }
       setLoading(false);
     });
@@ -47,7 +45,14 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     return <>{children}</>;
   }
 
-  if (!user) return null;
+  if (!user) {
+    // El middleware ya redireccionó a login, pero como fallback esperamos que cargue
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+      </div>
+    );
+  }
 
   return <AdminShell user={user}>{children}</AdminShell>;
 }
