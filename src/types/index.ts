@@ -92,10 +92,10 @@ export interface Promotion {
   description: string | null;
   discount_percent: number | null;
   discount_fixed: number | null;
-  discount_type: 'percent' | 'fixed';
+  discount_type: string | null;
   image_url: string | null;
-  badge_label: string;
-  display_priority: number;
+  badge_label: string | null;
+  display_priority: number | null;
   is_active: boolean;
   valid_from: string;
   valid_until: string | null;
