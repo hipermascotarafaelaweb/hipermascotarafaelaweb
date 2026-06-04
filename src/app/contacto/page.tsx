@@ -17,7 +17,7 @@ export default function ContactoPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-3xl border border-gray-100 p-8 space-y-6 shadow-sm">
+        <div className="bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 space-y-6 shadow-sm">
           <h2 className="text-xl font-extrabold text-gray-900">Información del local</h2>
 
           <div className="space-y-5">
@@ -61,7 +61,7 @@ export default function ContactoPage() {
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-brand-600 to-leaf-600 rounded-3xl p-8 flex flex-col items-center justify-center text-center text-white shadow-lg shadow-brand-600/20">
+        <div className="bg-gradient-to-br from-brand-600 to-leaf-600 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center text-white shadow-lg shadow-brand-600/20">
           <MessageCircle className="w-14 h-14 mb-5 opacity-90" />
           <h2 className="text-2xl font-extrabold mb-2 font-logo">¿Tenés una consulta?</h2>
           <p className="text-brand-50 mb-6 max-w-xs">

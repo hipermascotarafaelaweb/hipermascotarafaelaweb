@@ -415,7 +415,7 @@ export default function CartDrawer({
                   />
                   {errors.dni && <p className="text-xs text-red-500 mt-1">{errors.dni}</p>}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
                   {field('first_name', 'Nombre', { placeholder: 'Juan' })}
                   {field('last_name', 'Apellido', { placeholder: 'Pérez' })}
                 </div>

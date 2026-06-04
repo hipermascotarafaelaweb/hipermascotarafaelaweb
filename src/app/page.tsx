@@ -12,12 +12,12 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white">
-        <PawPrint className="absolute -top-6 -left-6 w-40 h-40 text-brand-100 rotate-12" />
+        <PawPrint className="absolute -top-4 -left-4 w-24 h-24 sm:w-40 sm:h-40 text-brand-100 rotate-12" />
         <PawPrint className="absolute top-20 right-4 w-24 h-24 text-brand-100 -rotate-12 hidden sm:block" />
         <PawPrint className="absolute bottom-8 left-1/4 w-20 h-20 text-brand-100 rotate-45 hidden lg:block" />
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center relative">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-[1.05] font-logo animate-fade-in-up">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 md:py-28 text-center relative">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-[1.05] font-logo animate-fade-in-up">
             Todo para mimar a tu{' '}
             <span className="text-brand-500 relative whitespace-nowrap">
               mascota
@@ -33,7 +33,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/productos"
-              className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all shadow-lg shadow-brand-600/25"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all shadow-lg shadow-brand-600/25"
             >
               Ver productos
               <ArrowRight className="w-5 h-5" />
@@ -42,7 +42,7 @@ export default function HomePage() {
               href={whatsappLink()}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-brand-400 text-gray-700 font-bold px-8 py-4 rounded-2xl text-lg transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-brand-400 text-gray-700 font-bold px-8 py-4 rounded-2xl text-lg transition-all"
             >
               <MessageCircle className="w-5 h-5 text-brand-600" />
               Escribinos

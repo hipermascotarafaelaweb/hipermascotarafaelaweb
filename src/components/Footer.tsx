@@ -7,9 +7,9 @@ export default function Footer() {
   return (
     <footer className="mt-auto text-gray-900" style={{ backgroundColor: '#f4faeb' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div className="md:col-span-1">
-            <Logo className="h-20 w-auto" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
+          <div className="col-span-1 sm:col-span-2 md:col-span-1">
+            <Logo className="h-16 sm:h-20 w-auto" />
             <p className="text-sm text-gray-700 mt-4 leading-relaxed">
               Accesorios para perros y gatos en {SITE.city}, {SITE.state}. Calidad y
               atención personalizada, con envío gratis a domicilio.

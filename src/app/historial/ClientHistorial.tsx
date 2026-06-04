@@ -70,7 +70,7 @@ export default function ClientHistorial() {
       </div>
 
       <form onSubmit={handleSearch} className="mb-12 space-y-3">
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col md:flex-row gap-2">
           <div className="relative flex-1">
             <input
               type="text"
@@ -123,7 +123,7 @@ export default function ClientHistorial() {
         <div className="space-y-4">
           <p className="text-sm text-gray-500 font-semibold">{orders.length} pedido(s) encontrado(s)</p>
           {orders.map((order) => (
-            <div key={order.id} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div key={order.id} className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="font-extrabold text-gray-900">Pedido #{order.id}</p>
@@ -154,7 +154,7 @@ export default function ClientHistorial() {
 
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <span className="text-gray-600 font-semibold">Total</span>
-                <span className="text-2xl font-extrabold text-gray-900">{formatPrice(order.total_amount)}</span>
+                <span className="text-xl sm:text-2xl font-extrabold text-gray-900">{formatPrice(order.total_amount)}</span>
               </div>
 
               {order.customer_address && (

@@ -75,12 +75,12 @@ export default async function FeaturedProducts() {
       {categories.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 font-logo">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 font-logo">
               Categorías
             </h2>
             <p className="text-gray-500">Encontrá justo lo que tu mascota necesita</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
             {categories.map((cat) => {
               const Icon = getCategoryIcon(cat.slug);
               return (
@@ -107,7 +107,7 @@ export default async function FeaturedProducts() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="flex items-end justify-between mb-10">
               <div>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 font-logo">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 font-logo">
                   Destacados
                 </h2>
                 <p className="text-gray-500 mt-1">Los favoritos de nuestros clientes</p>
@@ -120,7 +120,7 @@ export default async function FeaturedProducts() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
               {products.map((product, i) => (
                 <ProductCard
                   key={product.id}

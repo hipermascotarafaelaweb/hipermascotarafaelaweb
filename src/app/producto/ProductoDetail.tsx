@@ -138,7 +138,7 @@ export default function ProductoDetail() {
           </div>
 
           {gallery.length > 1 && (
-            <div className="grid grid-cols-5 gap-2.5 mt-3">
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-2.5 mt-3">
               {gallery.map((src, i) => (
                 <button
                   key={src}
@@ -169,7 +169,7 @@ export default function ProductoDetail() {
           <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">
             {product.name}
           </h1>
-          <div className="flex items-baseline gap-3 mb-4">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
             <p className={cn('text-3xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
               {formatPrice(effectivePrice(product))}
             </p>
@@ -275,7 +275,7 @@ export default function ProductoDetail() {
           <h2 className="text-2xl font-extrabold text-gray-900 mb-6 font-logo">
             También te puede gustar
           </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {related.map((p, i) => (
               <ProductCard key={p.id} product={p} index={i} />
             ))}

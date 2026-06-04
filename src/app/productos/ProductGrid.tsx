@@ -124,7 +124,7 @@ export default function ProductGrid({
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6 space-y-5 animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5 mb-6 space-y-5 max-h-[70vh] overflow-y-auto animate-in slide-in-from-top-2 duration-200">
           {/* Mascota */}
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Mascota</label>
@@ -263,7 +263,7 @@ export default function ProductGrid({
           <p className="text-sm text-gray-400 mt-1">Probá con otra categoría o búsqueda.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
           {filtered.map((product, i) => (
             <ProductCard
               key={product.id}
