@@ -319,14 +319,14 @@ where not exists (
 -- ============================================================
 
 -- 1. FUNCTION SECURITY: set search_path para evitar hijacking
-alter function if exists public.create_order_with_stock(text, text, text, text, jsonb, numeric, text, numeric, text)
+alter function public.create_order_with_stock(text, text, text, text, jsonb, numeric, text, numeric, text)
   set search_path = public, pg_temp;
-alter function if exists public.increment_coupon_use(bigint)
+alter function public.increment_coupon_use(bigint)
   set search_path = public, pg_temp;
 
 -- 2. REVOKE execute a anon/public: estas funciones solo vía service role (checkout)
-revoke if exists execute on function public.create_order_with_stock(text, text, text, text, jsonb, numeric, text, numeric, text) from anon, public;
-revoke if exists execute on function public.increment_coupon_use(bigint) from anon, public;
+revoke execute on function public.create_order_with_stock(text, text, text, text, jsonb, numeric, text, numeric, text) from anon, public;
+revoke execute on function public.increment_coupon_use(bigint) from anon, public;
 
 -- 3. POLÍTICAS MEJORADAS: insert de pedidos/clientes debe validarse via RPC, no público directo
 -- (Opción: descomentar para bloquear insert público. Por ahora se valida en el checkout RPC server-side.)
