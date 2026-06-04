@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { isPromotionActive, applyPromotionDiscount } from '@/utils/promotions';
+import type { Promotion } from '@/types';
 
 interface CartItem {
   product_id: number;
@@ -177,6 +179,31 @@ export async function POST(request: NextRequest) {
 
     const productMap = new Map(products.map((p) => [p.id, p]));
 
+    // Promociones activas vinculadas a estos productos, para aplicar el
+    // descuento server-side y que el total cobrado coincida con el carrito.
+    const promoByProduct = new Map<number, Promotion>();
+    const { data: promoLinks } = await supabase
+      .from('promotion_products')
+      .select('product_id, promotion_id')
+      .in('product_id', productIds);
+
+    if (promoLinks && promoLinks.length > 0) {
+      const promoIds = [...new Set(promoLinks.map((l) => l.promotion_id))];
+      const { data: promos } = await supabase
+        .from('promotions')
+        .select('*')
+        .in('id', promoIds);
+      const promosById = new Map(
+        ((promos as Promotion[]) || []).map((p) => [p.id, p])
+      );
+      for (const link of promoLinks) {
+        const promo = promosById.get(link.promotion_id);
+        if (promo && isPromotionActive(promo)) {
+          promoByProduct.set(link.product_id, promo);
+        }
+      }
+    }
+
     let subtotal = 0;
     const orderItems: CartItem[] = [];
 
@@ -192,7 +219,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const price = product.sale_price ?? product.price;
+      const base = product.sale_price ?? product.price;
+      const promo = promoByProduct.get(productId);
+      const price = promo
+        ? Math.min(base, Math.round(applyPromotionDiscount(product.price, promo)))
+        : base;
       subtotal += price * qty;
 
       orderItems.push({

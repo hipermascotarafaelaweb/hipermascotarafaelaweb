@@ -14,6 +14,7 @@ import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/uti
 import { cn } from '@/utils/cn';
 import type { Product, Promotion } from '@/types';
 import ProductCard from '@/components/ProductCard';
+import { applyPromotionToProduct } from '@/utils/promotions';
 
 const WHATSAPP = '5493492330291'; // Force Vercel redeploy
 
@@ -109,17 +110,22 @@ export default function ProductoDetail() {
     );
   }
 
+  // Producto con la promoción activa incorporada al precio (si conviene).
+  const displayProduct = promotions.length > 0
+    ? applyPromotionToProduct(product, promotions[0])
+    : product;
+
   const outOfStock = product.stock <= 0;
-  const onSale = hasDiscount(product);
+  const onSale = hasDiscount(displayProduct);
   // Galería: foto principal + adicionales, sin duplicados ni vacíos.
   const gallery = [product.image_url, ...(product.images ?? [])].filter(
     (src, i, arr): src is string => !!src && arr.indexOf(src) === i
   );
   const mainImg = gallery[Math.min(activeImg, gallery.length - 1)];
-  const consultMsg = `🐾 ¡Hola Hipermascota! Quería consultar por: ${product.name} (${formatPrice(effectivePrice(product))}).`;
+  const consultMsg = `🐾 ¡Hola Hipermascota! Quería consultar por: ${product.name} (${formatPrice(effectivePrice(displayProduct))}).`;
 
   const handleAdd = () => {
-    addItem(product, qty);
+    addItem(displayProduct, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -200,13 +206,13 @@ export default function ProductoDetail() {
           </h1>
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
             <p className={cn('text-3xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
-              {formatPrice(effectivePrice(product))}
+              {formatPrice(effectivePrice(displayProduct))}
             </p>
             {onSale && (
               <>
                 <span className="text-xl text-gray-400 line-through">{formatPrice(product.price)}</span>
                 <span className="bg-red-100 text-red-700 text-sm font-bold px-2 py-0.5 rounded-lg">
-                  -{discountPercent(product)}%
+                  -{discountPercent(displayProduct)}%
                 </span>
               </>
             )}

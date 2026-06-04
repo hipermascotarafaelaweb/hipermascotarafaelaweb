@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import ProductGrid from './ProductGrid';
 import type { Product, Category, Promotion, PromotionProduct } from '@/types';
+import { applyPromotionToProduct } from '@/utils/promotions';
 
 interface ProductosClientProps {
   initialCategory?: string;
@@ -31,7 +32,7 @@ export default async function ProductosClient({ initialCategory = 'all' }: Produ
       .select('*'),
   ]);
 
-  const products = (productsRes.data as Product[]) || [];
+  const rawProducts = (productsRes.data as Product[]) || [];
   const categories = (categoriesRes.data as Category[]) || [];
   const promotions = (promotionsRes.data as Promotion[]) || [];
   const promotionProducts = (promotionProductsRes.data as PromotionProduct[]) || [];
@@ -43,6 +44,11 @@ export default async function ProductosClient({ initialCategory = 'all' }: Produ
       promotionsByProductId.set(pp.product_id, promotion);
     }
   });
+
+  // Incorporar la promoción al precio del producto para que el carrito la aplique.
+  const products = rawProducts.map(p =>
+    applyPromotionToProduct(p, promotionsByProductId.get(p.id))
+  );
 
   return (
     <ProductGrid

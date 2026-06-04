@@ -1,4 +1,5 @@
-import { Promotion } from '@/types';
+import { Promotion, Product } from '@/types';
+import { effectivePrice } from '@/utils/format';
 
 export function isPromotionActive(promotion: Promotion): boolean {
   const now = new Date();
@@ -40,4 +41,25 @@ export function formatDiscount(promotion: Promotion): string {
     return `$${promotion.discount_fixed.toFixed(0)}`;
   }
   return '';
+}
+
+/**
+ * Devuelve el producto con la promoción incorporada a `sale_price` cuando
+ * conviene al cliente (precio promocional menor al precio efectivo actual).
+ * Así todo el flujo existente (carrito, total, WhatsApp, checkout) toma el
+ * descuento automáticamente vía effectivePrice, sin lógica extra.
+ */
+export function applyPromotionToProduct(
+  product: Product,
+  promotion?: Promotion | null
+): Product {
+  if (!promotion || !isPromotionActive(promotion)) return product;
+
+  const promoPrice = Math.round(applyPromotionDiscount(product.price, promotion));
+  const base = effectivePrice(product);
+
+  if (promoPrice > 0 && promoPrice < base) {
+    return { ...product, sale_price: promoPrice };
+  }
+  return product;
 }

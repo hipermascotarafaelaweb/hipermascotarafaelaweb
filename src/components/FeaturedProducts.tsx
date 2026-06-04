@@ -4,6 +4,7 @@ import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ProductCard from '@/components/ProductCard';
 import type { Product, Category, Promotion, PromotionProduct } from '@/types';
+import { applyPromotionToProduct } from '@/utils/promotions';
 
 const categoryIconMap: Record<string, any> = {
   'camas-y-cuchas': Home,
@@ -60,8 +61,13 @@ const fetchData = cache(async () => {
     }
   });
 
+  const rawProducts = (productsRes.data as Product[]) || [];
+  const products = rawProducts.map(p =>
+    applyPromotionToProduct(p, promotionsByProductId.get(p.id))
+  );
+
   return {
-    products: (productsRes.data as Product[]) || [],
+    products,
     categories: (categoriesRes.data as Category[]) || [],
     promotionsByProductId,
   };
