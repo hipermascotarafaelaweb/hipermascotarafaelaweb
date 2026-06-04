@@ -33,7 +33,7 @@ function isRateLimited(key: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { dni } = body;
+    const { dni, phone } = body;
 
     if (!dni || typeof dni !== 'string') {
       return NextResponse.json(
@@ -45,6 +45,13 @@ export async function POST(request: NextRequest) {
     if (!/^\d{7,9}$/.test(dni)) {
       return NextResponse.json(
         { error: 'DNI inválido' },
+        { status: 400 }
+      );
+    }
+
+    if (!phone || typeof phone !== 'string' || phone.trim().length < 10) {
+      return NextResponse.json(
+        { error: 'Teléfono requerido y válido' },
         { status: 400 }
       );
     }
@@ -65,10 +72,27 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    // Verificar que DNI + teléfono coincidan en al menos un pedido
+    // (segundo factor de autenticación)
+    const { data: verified, error: verifyError } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('customer_dni', dni)
+      .eq('customer_phone', phone)
+      .limit(1);
+
+    if (verifyError || !verified || verified.length === 0) {
+      return NextResponse.json(
+        { error: 'DNI o teléfono no coinciden con nuestros registros' },
+        { status: 401 }
+      );
+    }
+
     const { data: orders, error } = await supabase
       .from('orders')
       .select('id, customer_dni, created_at, total_amount, status')
       .eq('customer_dni', dni)
+      .eq('customer_phone', phone)
       .eq('status', 'Entregado')
       .order('created_at', { ascending: false })
       .limit(100);
