@@ -10,7 +10,11 @@
     "network": {
       "allowedDomains": [
         "github.com",
-        "*.github.com"
+        "*.github.com",
+        "*.supabase.co",
+        "*.supabase.com",
+        "api.vercel.com",
+        "*.vercel.com"
       ]
     }
   }
