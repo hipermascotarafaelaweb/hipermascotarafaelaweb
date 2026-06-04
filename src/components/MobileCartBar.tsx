@@ -1,18 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/utils/format';
+import { useMounted } from '@/hooks/useMounted';
 
 /** Barra fija inferior (solo mobile) para abrir el pedido rápido. */
 export default function MobileCartBar({ onOpen }: { onOpen: () => void }) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const items = useCartStore((s) => s.items);
   const totalItems = useCartStore((s) => s.totalItems);
   const totalPrice = useCartStore((s) => s.totalPrice);
-
-  useEffect(() => setMounted(true), []);
 
   if (!mounted || items.length === 0) return null;
 

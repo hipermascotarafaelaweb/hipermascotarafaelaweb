@@ -9,8 +9,8 @@ export interface Toast {
   duration?: number;
 }
 
-let toastListeners: Set<(toast: Toast) => void> = new Set();
-let removeListeners: Set<(id: string) => void> = new Set();
+const toastListeners: Set<(toast: Toast) => void> = new Set();
+const removeListeners: Set<(id: string) => void> = new Set();
 let toastId = 0;
 
 export function useToast() {

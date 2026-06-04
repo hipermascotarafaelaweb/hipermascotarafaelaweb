@@ -3,17 +3,15 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Edit2, Plus } from 'lucide-react';
 import PromotionForm from './PromotionForm';
-import { Promotion } from '@/types';
+import type { Promotion } from '@/types';
+
+type AdminPromotion = Promotion & { product_ids: number[]; category_ids: number[] };
 
 export default function PromotionsPage() {
-  const [promotions, setPromotions] = useState<any[]>([]);
+  const [promotions, setPromotions] = useState<AdminPromotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingPromotion, setEditingPromotion] = useState<any>(null);
-
-  useEffect(() => {
-    fetchPromotions();
-  }, []);
+  const [editingPromotion, setEditingPromotion] = useState<AdminPromotion | null>(null);
 
   const fetchPromotions = async () => {
     try {
@@ -28,6 +26,11 @@ export default function PromotionsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPromotions();
+  }, []);
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta promoción?')) return;
@@ -52,7 +55,7 @@ export default function PromotionsPage() {
     fetchPromotions();
   };
 
-  const isActive = (promo: any) => {
+  const isActive = (promo: AdminPromotion) => {
     const now = new Date();
     const from = new Date(promo.valid_from);
     const until = promo.valid_until ? new Date(promo.valid_until) : null;

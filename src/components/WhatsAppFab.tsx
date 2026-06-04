@@ -1,20 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { whatsappLink } from '@/config/site';
 import { cn } from '@/utils/cn';
+import { useMounted } from '@/hooks/useMounted';
 const DEFAULT_MSG =
   '🐾 ¡Hola Hipermascota! Quería hacer una consulta sobre sus productos.';
 
 export default function WhatsAppFab() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const items = useCartStore((s) => s.items);
-
-  useEffect(() => setMounted(true), []);
 
   // No mostrar en el panel de administración.
   if (pathname.startsWith('/admin')) return null;

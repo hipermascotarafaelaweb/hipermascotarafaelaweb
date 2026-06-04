@@ -43,6 +43,9 @@ export default function CategoriasPage() {
   };
 
   useEffect(() => {
+    // Fetch inicial al montar. Las setState ocurren tras el await (async),
+    // el linter del React Compiler las marca igual; se deshabilita puntualmente.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

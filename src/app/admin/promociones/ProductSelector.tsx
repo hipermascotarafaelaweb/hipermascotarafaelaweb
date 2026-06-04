@@ -18,22 +18,21 @@ export default function ProductSelector({
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        if (data.success) {
+          setProducts(data.products);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProducts();
   }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      if (data.success) {
-        setProducts(data.products);
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleProduct = (productId: number) => {
     if (selectedProductIds.includes(productId)) {

@@ -36,6 +36,7 @@ export default function CuponesPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCoupons();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

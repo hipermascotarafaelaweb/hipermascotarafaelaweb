@@ -1,12 +1,15 @@
 import { createClient } from '@/utils/supabase/server';
+import type { Promotion } from '@/types';
 import PromotionsSection from './PromotionsSection';
 
 export default async function PromotionsSectionServer() {
+  let promotions: Promotion[] = [];
+
   try {
     const supabase = await createClient();
     const now = new Date().toISOString();
 
-    const { data: promotions } = await supabase
+    const { data } = await supabase
       .from('promotions')
       .select('*')
       .eq('is_active', true)
@@ -15,9 +18,11 @@ export default async function PromotionsSectionServer() {
       .order('display_priority', { ascending: true })
       .order('created_at', { ascending: false });
 
-    return <PromotionsSection promotions={promotions || []} />;
+    promotions = (data as Promotion[]) || [];
   } catch (error) {
     console.error('Error fetching promotions:', error);
     return null;
   }
+
+  return <PromotionsSection promotions={promotions} />;
 }

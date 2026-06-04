@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ShoppingCart, Menu, X, History } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/cart';
+import { useMounted } from '@/hooks/useMounted';
 import { cn } from '@/utils/cn';
 import Logo from './Logo';
 
@@ -16,13 +17,12 @@ const links = [
 
 export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const totalItems = useCartStore((s) => s.totalItems);
   const pathname = usePathname();
+  const mounted = useMounted();
 
   useEffect(() => {
-    setMounted(true);
     const handleScroll = () => setScrolled(window.scrollY > 8);
     handleScroll();
     window.addEventListener('scroll', handleScroll);

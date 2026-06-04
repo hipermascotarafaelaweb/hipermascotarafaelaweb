@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
 import { requireAdmin } from '@/utils/supabase/requireAdmin';
-import { Promotion } from '@/types';
 
 export async function GET() {
   try {
@@ -118,7 +117,7 @@ export async function POST(request: Request) {
     if (error instanceof Error) {
       message = error.message;
     } else if (typeof error === 'object' && error !== null && 'message' in error) {
-      message = String((error as any).message);
+      message = String((error as { message: unknown }).message);
     }
     return Response.json(
       { success: false, error: message },
@@ -139,7 +138,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { id, ...updates } = body;
 
-    const updateData: any = { ...updates };
+    const updateData: Record<string, unknown> = { ...updates };
     if (updates.discount_type === 'percent') {
       updateData.discount_fixed = null;
     } else if (updates.discount_type === 'fixed') {

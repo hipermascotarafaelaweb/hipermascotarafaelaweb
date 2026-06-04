@@ -8,11 +8,7 @@ interface LogoProps {
   light?: boolean;
 }
 
-export default function Logo({
-  className,
-  stacked = false,
-  light = false,
-}: LogoProps) {
+export default function Logo({ className }: LogoProps) {
   return (
     <div
       className={cn('inline-flex select-none', className)}

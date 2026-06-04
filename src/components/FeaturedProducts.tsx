@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { ArrowRight, Home, Link2, Radio, UtensilsCrossed, Droplets, Gamepad2, Wind, Shirt, Backpack } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ProductCard from '@/components/ProductCard';
 import type { Product, Category, Promotion, PromotionProduct } from '@/types';
 import { applyPromotionToProduct } from '@/utils/promotions';
 
-const categoryIconMap: Record<string, any> = {
+const categoryIconMap: Record<string, LucideIcon> = {
   'camas-y-cuchas': Home,
   'collares-y-correas': Link2,
   'collares-correas-y-arneses': Radio,

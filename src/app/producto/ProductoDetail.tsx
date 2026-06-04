@@ -33,6 +33,7 @@ export default function ProductoDetail() {
 
   useEffect(() => {
     if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
@@ -68,7 +69,7 @@ export default function ProductoDetail() {
 
         if (links && links.length > 0 && !linksError) {
           // Step 2: Get the actual promotions
-          const promoIds = links.map(l => (l as any).promotion_id);
+          const promoIds = links.map((l) => (l as { promotion_id: number }).promotion_id);
           const { data: promos } = await supabase
             .from('promotions')
             .select('*')

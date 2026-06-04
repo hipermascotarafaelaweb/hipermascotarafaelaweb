@@ -1,11 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import ProductSelector from './ProductSelector';
 
+interface PromotionInput {
+  id?: number;
+  title?: string;
+  description?: string | null;
+  discount_type?: string | null;
+  discount_percent?: number | null;
+  discount_fixed?: number | null;
+  image_url?: string | null;
+  badge_label?: string | null;
+  display_priority?: number | null;
+  is_active?: boolean;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  product_ids?: number[];
+}
+
 interface PromotionFormProps {
-  promotion?: any;
+  promotion?: PromotionInput | null;
   onSubmit: () => void;
   onCancel: () => void;
 }
@@ -26,8 +42,10 @@ export default function PromotionForm({
     title: promotion?.title || '',
     description: promotion?.description || '',
     discount_type: promotion?.discount_type || 'percent',
-    discount_percent: promotion?.discount_percent || '',
-    discount_fixed: promotion?.discount_fixed || '',
+    discount_percent:
+      promotion?.discount_percent != null ? String(promotion.discount_percent) : '',
+    discount_fixed:
+      promotion?.discount_fixed != null ? String(promotion.discount_fixed) : '',
     image_url: promotion?.image_url || '',
     badge_label: promotion?.badge_label || 'Promoción',
     display_priority: promotion?.display_priority || 0,

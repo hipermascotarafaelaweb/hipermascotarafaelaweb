@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabase();
 
-    const productIds = items.map((i: any) => asInt(i.product_id));
+    const productIds = items.map((i: { product_id: unknown }) => asInt(i.product_id));
 
     const { data: products, error: productsError } = await supabase
       .from('products')
@@ -237,7 +237,6 @@ export async function POST(request: NextRequest) {
     }
 
     let couponDiscount = 0;
-    let couponIncremented = false;
 
     if (couponCode && typeof couponCode === 'string') {
       const { data: coupon, error: couponError } = await supabase
@@ -260,7 +259,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Cupón agotado' }, { status: 400 });
       }
 
-      couponIncremented = true;
       couponDiscount = Math.round((subtotal * coupon.discount_percent) / 100);
     }
 
