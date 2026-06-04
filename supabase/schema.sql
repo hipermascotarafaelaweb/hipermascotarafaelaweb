@@ -312,3 +312,33 @@ select
 where not exists (
   select 1 from products where name = 'Cucha Fibroplástica Modelo Grande'
 );
+
+-- ============================================================
+--  PARCHES DE SEGURIDAD
+--  EJECUTÁ ESTO inmediatamente en el SQL Editor de Supabase.
+-- ============================================================
+
+-- 1. FUNCTION SECURITY: set search_path para evitar hijacking
+alter function if exists public.create_order_with_stock(text, text, text, text, jsonb, numeric, text, numeric, text)
+  set search_path = public, pg_temp;
+alter function if exists public.increment_coupon_use(bigint)
+  set search_path = public, pg_temp;
+
+-- 2. REVOKE execute a anon/public: estas funciones solo vía service role (checkout)
+revoke if exists execute on function public.create_order_with_stock(text, text, text, text, jsonb, numeric, text, numeric, text) from anon, public;
+revoke if exists execute on function public.increment_coupon_use(bigint) from anon, public;
+
+-- 3. POLÍTICAS MEJORADAS: insert de pedidos/clientes debe validarse via RPC, no público directo
+-- (Opción: descomentar para bloquear insert público. Por ahora se valida en el checkout RPC server-side.)
+-- drop policy if exists "alta clientes desde la web" on customers;
+-- drop policy if exists "alta pedidos desde la web" on orders;
+
+-- 4. NOTA CRÍTICO: Deshabilitar registros públicos en Dashboard → Authentication → Providers.
+-- Con signups habilitados, cualquiera obtiene rol 'authenticated' y acceso total al admin.
+-- Ir a https://app.supabase.com → [tu proyecto] → Authentication → Providers → Disable Sign Ups.
+
+-- 5. TODO: Crear tabla profiles(user_id, is_admin) y usar una función is_admin()
+-- para reemplazar "auth.role() = 'authenticated'" en todas las policies admin.
+-- Eso permite multiusuario con permisos granulares sin exponer todo al primer que se registre.
+-- Ej: create policy "admin productos" on products
+--       for all using (is_admin()) with check (is_admin());
