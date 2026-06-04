@@ -15,7 +15,7 @@ import { cn } from '@/utils/cn';
 import type { Product, Promotion } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
-const WHATSAPP = '5493492330291';
+const WHATSAPP = '5493492330291'; // Force Vercel redeploy
 
 export default function ProductoDetail() {
   const searchParams = useSearchParams();
