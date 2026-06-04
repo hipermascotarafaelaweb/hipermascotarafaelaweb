@@ -216,6 +216,7 @@ create or replace function public.create_order_with_stock(
 returns jsonb
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 declare
   item jsonb;
@@ -262,6 +263,7 @@ create or replace function public.increment_coupon_use(coupon_id bigint)
 returns jsonb
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 declare
   coupon coupons%rowtype;
