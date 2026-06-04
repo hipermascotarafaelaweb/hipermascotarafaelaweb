@@ -82,6 +82,69 @@ alter table orders add column if not exists customer_dni text;
 alter table orders add column if not exists customer_address text;
 
 -- ============================================================
+--  PERFILES Y ROL DE ADMIN
+--  is_admin() reemplaza "auth.role() = 'authenticated'" para que
+--  NO cualquier usuario logueado sea admin: solo los marcados.
+-- ============================================================
+create table if not exists public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  is_admin boolean not null default false,
+  created_at timestamptz default now()
+);
+
+alter table public.profiles enable row level security;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public, pg_temp
+as $$
+  select coalesce(
+    (select is_admin from public.profiles where user_id = auth.uid()),
+    false
+  );
+$$;
+
+revoke execute on function public.is_admin() from anon, public;
+grant execute on function public.is_admin() to authenticated, service_role;
+
+drop policy if exists "perfil propio o admin" on public.profiles;
+create policy "perfil propio o admin" on public.profiles
+  for select using (auth.uid() = user_id or public.is_admin());
+
+-- Crear perfil automáticamente al registrarse
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  insert into public.profiles (user_id, is_admin)
+  values (new.id, false)
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Backfill + marcar al dueño como admin
+insert into public.profiles (user_id, is_admin)
+select id, false from auth.users
+on conflict (user_id) do nothing;
+
+update public.profiles p set is_admin = true
+from auth.users u
+where u.id = p.user_id
+  and u.email = 'hipermascotarafaelaweb@gmail.com';
+
+-- ============================================================
 --  SEGURIDAD (Row Level Security)
 -- ============================================================
 alter table categories enable row level security;
@@ -96,25 +159,22 @@ create policy "lectura publica categorias" on categories for select using (true)
 drop policy if exists "lectura publica productos" on products;
 create policy "lectura publica productos" on products for select using (true);
 
--- La web puede registrar clientes y pedidos (solo insertar)
-drop policy if exists "alta clientes desde la web" on customers;
-create policy "alta clientes desde la web" on customers for insert with check (true);
+-- NOTA: El alta de clientes/pedidos se hace SOLO desde el checkout server-side
+-- con service role (bypassa RLS). No hay insert público para evitar spam directo
+-- con la anon key.
 
-drop policy if exists "alta pedidos desde la web" on orders;
-create policy "alta pedidos desde la web" on orders for insert with check (true);
-
--- El administrador (logueado) gestiona todo
+-- El administrador (is_admin) gestiona todo
 drop policy if exists "admin categorias" on categories;
-create policy "admin categorias" on categories for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin categorias" on categories for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "admin productos" on products;
-create policy "admin productos" on products for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin productos" on products for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "admin clientes" on customers;
-create policy "admin clientes" on customers for select using (auth.role() = 'authenticated');
+create policy "admin clientes" on customers for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "admin pedidos" on orders;
-create policy "admin pedidos" on orders for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin pedidos" on orders for all using (public.is_admin()) with check (public.is_admin());
 
 -- Cupones (RLS)
 alter table coupons enable row level security;
@@ -123,7 +183,7 @@ drop policy if exists "lectura cupones activos" on coupons;
 create policy "lectura cupones activos" on coupons for select using (active = true and valid_from <= now() and (valid_until is null or valid_until > now()));
 
 drop policy if exists "admin cupones" on coupons;
-create policy "admin cupones" on coupons for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin cupones" on coupons for all using (public.is_admin()) with check (public.is_admin());
 
 -- 6. PROMOTIONS (OFERTAS) -------------------------------------------
 create table if not exists promotions (
@@ -169,19 +229,19 @@ drop policy if exists "lectura promociones activas" on promotions;
 create policy "lectura promociones activas" on promotions for select using (is_active = true and valid_from <= now() and (valid_until is null or valid_until > now()));
 
 drop policy if exists "admin promociones" on promotions;
-create policy "admin promociones" on promotions for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin promociones" on promotions for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "lectura productos promocionados" on promotion_products;
 create policy "lectura productos promocionados" on promotion_products for select using (true);
 
 drop policy if exists "admin promociones productos" on promotion_products;
-create policy "admin promociones productos" on promotion_products for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin promociones productos" on promotion_products for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "lectura categorias promocionadas" on promotion_categories;
 create policy "lectura categorias promocionadas" on promotion_categories for select using (true);
 
 drop policy if exists "admin promociones categorias" on promotion_categories;
-create policy "admin promociones categorias" on promotion_categories for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin promociones categorias" on promotion_categories for all using (public.is_admin()) with check (public.is_admin());
 
 -- ============================================================
 --  STORAGE (bucket "products" para las fotos)
@@ -191,13 +251,13 @@ drop policy if exists "fotos publicas" on storage.objects;
 create policy "fotos publicas" on storage.objects for select using (bucket_id = 'products');
 
 drop policy if exists "admin sube fotos" on storage.objects;
-create policy "admin sube fotos" on storage.objects for insert with check (bucket_id = 'products' and auth.role() = 'authenticated');
+create policy "admin sube fotos" on storage.objects for insert with check (bucket_id = 'products' and public.is_admin());
 
 drop policy if exists "admin edita fotos" on storage.objects;
-create policy "admin edita fotos" on storage.objects for update using (bucket_id = 'products' and auth.role() = 'authenticated');
+create policy "admin edita fotos" on storage.objects for update using (bucket_id = 'products' and public.is_admin());
 
 drop policy if exists "admin borra fotos" on storage.objects;
-create policy "admin borra fotos" on storage.objects for delete using (bucket_id = 'products' and auth.role() = 'authenticated');
+create policy "admin borra fotos" on storage.objects for delete using (bucket_id = 'products' and public.is_admin());
 
 -- ============================================================
 --  FUNCIÓN: crear pedido y descontar stock atómicamente
@@ -340,7 +400,7 @@ revoke execute on function public.increment_coupon_use(bigint) from anon, public
 -- Ir a https://app.supabase.com → [tu proyecto] → Authentication → Providers → Disable Sign Ups.
 
 -- 5. TODO: Crear tabla profiles(user_id, is_admin) y usar una función is_admin()
--- para reemplazar "auth.role() = 'authenticated'" en todas las policies admin.
+-- para reemplazar "public.is_admin()" en todas las policies admin.
 -- Eso permite multiusuario con permisos granulares sin exponer todo al primer que se registre.
 -- Ej: create policy "admin productos" on products
 --       for all using (is_admin()) with check (is_admin());
