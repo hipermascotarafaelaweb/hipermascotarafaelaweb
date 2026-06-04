@@ -12,7 +12,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useCartStore } from '@/store/cart';
 import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/utils/format';
 import { cn } from '@/utils/cn';
-import type { Product } from '@/types';
+import type { Product, Promotion } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
 const WHATSAPP = '5493492330291';
@@ -21,6 +21,7 @@ export default function ProductoDetail() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const [product, setProduct] = useState<Product | null>(null);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
@@ -44,6 +45,7 @@ export default function ProductoDetail() {
         const p = data as Product | null;
         setProduct(p);
         setLoading(false);
+
         if (p?.category_id) {
           const { data: rel } = await supabase
             .from('products')
@@ -52,6 +54,24 @@ export default function ProductoDetail() {
             .neq('id', p.id)
             .limit(4);
           setRelated((rel as Product[]) || []);
+        }
+
+        // Fetch active promotions for this product
+        const now = new Date().toISOString();
+        const { data: promoData } = await supabase
+          .from('promotions_products')
+          .select('promotion:promotions(*)')
+          .eq('product_id', id);
+
+        if (promoData) {
+          const activePromos = (promoData as any[])
+            .map(pp => pp.promotion as Promotion)
+            .filter(promo =>
+              promo.active &&
+              new Date(promo.valid_from) <= new Date(now) &&
+              (!promo.valid_until || new Date(promo.valid_until) >= new Date(now))
+            );
+          setPromotions(activePromos);
         }
       });
   }, [id]);
@@ -198,6 +218,26 @@ export default function ProductoDetail() {
             <p className="text-gray-600 leading-relaxed mb-6 whitespace-pre-line">
               {product.description}
             </p>
+          )}
+
+          {promotions.length > 0 && (
+            <div className="bg-brand-50 border border-brand-200 rounded-xl p-4 mb-6">
+              {promotions.map(promo => (
+                <div key={promo.id} className="mb-3 last:mb-0">
+                  <p className="font-bold text-brand-700 text-sm">{promo.name}</p>
+                  {promo.description && (
+                    <p className="text-sm text-gray-600 mt-1">{promo.description}</p>
+                  )}
+                  {(promo.discount_percent || promo.discount_amount) && (
+                    <p className="text-sm font-semibold text-brand-600 mt-1">
+                      {promo.discount_percent && `${promo.discount_percent}% descuento`}
+                      {promo.discount_percent && promo.discount_amount && ' o '}
+                      {promo.discount_amount && `$${promo.discount_amount.toFixed(2)} descuento`}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
 
           {!outOfStock && (

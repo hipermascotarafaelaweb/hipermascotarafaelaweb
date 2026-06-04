@@ -82,3 +82,15 @@ export interface Coupon {
   active: boolean;
   created_at: string;
 }
+
+export interface Promotion {
+  id: number;
+  name: string;
+  description: string | null;
+  discount_percent: number | null;
+  discount_amount: number | null;
+  valid_from: string;
+  valid_until: string | null;
+  active: boolean;
+  created_at: string;
+}
