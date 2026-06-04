@@ -14,7 +14,10 @@ const empty: CustomerInput = {
   last_name: '',
   dni: '',
   phone: '',
-  address: '',
+  street: '',
+  city: '',
+  province: '',
+  postal_code: '',
 };
 
 /** Recuerda los datos del cliente para no tener que recargarlos en cada compra. */

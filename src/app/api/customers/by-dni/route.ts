@@ -1,11 +1,40 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Customer } from '@/types';
+import type { Customer, CustomerInput } from '@/types';
 
 function getSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   );
+}
+
+function parseAddress(fullAddress: string | null): Partial<CustomerInput> {
+  if (!fullAddress) {
+    return { street: '', city: '', province: '', postal_code: '' };
+  }
+
+  // Formato esperado: "Calle Número, Ciudad, Provincia CodigoPostal"
+  const parts = fullAddress.split(',').map(p => p.trim());
+
+  let street = '';
+  let city = '';
+  let province = '';
+  let postal_code = '';
+
+  if (parts.length >= 1) street = parts[0];
+  if (parts.length >= 2) city = parts[1];
+  if (parts.length >= 3) {
+    // La provincia y código postal están juntos en parts[2]
+    const provincePostal = parts[2].match(/^(.+?)\s+(\d+)$/);
+    if (provincePostal) {
+      province = provincePostal[1];
+      postal_code = provincePostal[2];
+    } else {
+      province = parts[2];
+    }
+  }
+
+  return { street, city, province, postal_code };
 }
 
 export async function POST(req: Request) {
@@ -35,7 +64,21 @@ export async function POST(req: Request) {
       throw error;
     }
 
-    return Response.json({ customer: data as Customer }, { status: 200 });
+    const customer = data as Customer;
+    const addressParts = parseAddress(customer.address);
+
+    return Response.json(
+      {
+        customer: {
+          first_name: customer.first_name,
+          last_name: customer.last_name,
+          dni: customer.dni,
+          phone: customer.phone,
+          ...addressParts,
+        },
+      },
+      { status: 200 }
+    );
   } catch (err) {
     console.error('Error fetching customer:', err);
     return Response.json(

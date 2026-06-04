@@ -54,7 +54,10 @@ export interface CustomerInput {
   last_name: string;
   dni: string;
   phone: string;
-  address: string;
+  street: string;
+  city: string;
+  province: string;
+  postal_code: string;
 }
 
 export interface Order {

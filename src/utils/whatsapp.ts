@@ -27,7 +27,7 @@ export function generateWhatsAppLink(
 Nombre: ${customer.first_name} ${customer.last_name}
 DNI: ${customer.dni}
 Teléfono: ${customer.phone}
-📍 Dirección de envío: ${customer.address}`
+📍 Dirección: ${customer.street}, ${customer.city}, ${customer.province} ${customer.postal_code}`
     : '';
 
   const subtotal = couponDiscount ? total + couponDiscount : total;

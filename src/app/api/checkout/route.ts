@@ -146,13 +146,18 @@ export async function POST(request: NextRequest) {
       !customer.first_name ||
       !customer.last_name ||
       !customer.phone ||
-      !customer.address
+      !customer.street ||
+      !customer.city ||
+      !customer.province ||
+      !customer.postal_code
     ) {
       return NextResponse.json(
         { error: 'Datos del cliente incompletos' },
         { status: 400 }
       );
     }
+
+    const fullAddress = `${customer.street}, ${customer.city}, ${customer.province} ${customer.postal_code}`;
 
     const supabase = getSupabase();
 
@@ -241,7 +246,7 @@ export async function POST(request: NextRequest) {
         customer_name: `${customer.first_name} ${customer.last_name}`,
         customer_dni: customer.dni,
         customer_phone: customer.phone,
-        customer_address: customer.address,
+        customer_address: fullAddress,
         items: orderItems,
         total_amount: totalAmount,
         coupon_code: couponCode || null,
@@ -267,7 +272,7 @@ export async function POST(request: NextRequest) {
         first_name: customer.first_name,
         last_name: customer.last_name,
         phone: customer.phone,
-        address: customer.address,
+        address: fullAddress,
       },
       { onConflict: 'dni' }
     );

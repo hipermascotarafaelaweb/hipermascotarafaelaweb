@@ -71,7 +71,10 @@ export default function CartDrawer({
           last_name: data.customer.last_name,
           dni: data.customer.dni,
           phone: data.customer.phone,
-          address: data.customer.address || '',
+          street: data.customer.street || '',
+          city: data.customer.city || '',
+          province: data.customer.province || '',
+          postal_code: data.customer.postal_code || '',
         });
       }
     } catch (err) {
@@ -125,7 +128,10 @@ export default function CartDrawer({
     const dniClean = customer.dni.replace(/\D/g, '');
     if (!/^\d{7,9}$/.test(dniClean)) e.dni = 'DNI inválido (7 a 9 dígitos)';
     if (!/^[\d\s+()-]{6,}$/.test(customer.phone.trim())) e.phone = 'Teléfono inválido';
-    if (customer.address.trim().length < 6) e.address = 'Ingresá la dirección de envío';
+    if (!customer.street.trim()) e.street = 'Ingresá calle y número';
+    if (!customer.city.trim()) e.city = 'Ingresá la ciudad';
+    if (!customer.province.trim()) e.province = 'Ingresá la provincia';
+    if (!customer.postal_code.trim()) e.postal_code = 'Ingresá el código postal';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -139,7 +145,10 @@ export default function CartDrawer({
       last_name: customer.last_name.trim(),
       dni: customer.dni.trim(),
       phone: customer.phone.trim(),
-      address: customer.address.trim(),
+      street: customer.street.trim(),
+      city: customer.city.trim(),
+      province: customer.province.trim(),
+      postal_code: customer.postal_code.trim(),
     };
 
     try {
@@ -453,9 +462,12 @@ export default function CartDrawer({
                   {field('last_name', 'Apellido', { placeholder: 'Pérez' })}
                 </div>
                 {field('phone', 'Teléfono', { placeholder: '3492 123456', inputMode: 'tel' })}
-                {field('address', 'Dirección de envío', {
-                  placeholder: 'Ej: Av. San Martín 123, Rafaela, Santa Fe',
-                })}
+                {field('street', 'Calle y Número', { placeholder: 'Av. San Martín 123' })}
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
+                  {field('city', 'Ciudad', { placeholder: 'Rafaela' })}
+                  {field('province', 'Provincia', { placeholder: 'Santa Fe' })}
+                </div>
+                {field('postal_code', 'Código Postal', { placeholder: '2300' })}
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Tus datos se usan únicamente para coordinar la entrega.{' '}
                   <Link href="/privacidad" onClick={onClose} className="text-brand-600 hover:underline font-semibold">
