@@ -58,20 +58,29 @@ export default function ProductoDetail() {
 
         // Fetch active promotions for this product
         const now = new Date().toISOString();
-        const { data: promoData } = await supabase
+
+        // Step 1: Get promotion IDs linked to this product
+        const { data: links, error: linksError } = await supabase
           .from('promotion_products')
-          .select('promotion:promotions(*)')
+          .select('promotion_id')
           .eq('product_id', id);
 
-        if (promoData) {
-          const activePromos = (promoData as any[])
-            .map(pp => pp.promotion as Promotion)
-            .filter(promo =>
-              promo.is_active &&
+        if (links && links.length > 0 && !linksError) {
+          // Step 2: Get the actual promotions
+          const promoIds = links.map(l => (l as any).promotion_id);
+          const { data: promos } = await supabase
+            .from('promotions')
+            .select('*')
+            .in('id', promoIds)
+            .eq('is_active', true);
+
+          if (promos) {
+            const activePromos = (promos as Promotion[]).filter(promo =>
               new Date(promo.valid_from) <= new Date(now) &&
               (!promo.valid_until || new Date(promo.valid_until) >= new Date(now))
             );
-          setPromotions(activePromos);
+            setPromotions(activePromos);
+          }
         }
       });
   }, [id]);
