@@ -34,18 +34,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cupón agotado.' }, { status: 400 });
     }
 
+    // Solo exponemos lo que el carrito necesita. No filtramos uses_count /
+    // max_uses / id: la validación de cupo y expiración ya se hizo arriba.
     return NextResponse.json({
       success: true,
       coupon: {
-        id: coupon.id,
         code: coupon.code,
         discount_percent: coupon.discount_percent,
-        max_uses: coupon.max_uses,
-        uses_count: coupon.uses_count,
-        valid_from: coupon.valid_from,
-        valid_until: coupon.valid_until,
-        active: coupon.active,
-        created_at: coupon.created_at,
       },
     });
   } catch {

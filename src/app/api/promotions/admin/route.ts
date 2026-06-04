@@ -1,9 +1,15 @@
 import { createClient } from '@/utils/supabase/server';
+import { requireAdmin } from '@/utils/supabase/requireAdmin';
 import { Promotion } from '@/types';
 
 export async function GET() {
   try {
     const supabase = await createClient();
+
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) {
+      return Response.json({ success: false, error: guard.error }, { status: guard.status });
+    }
 
     const { data: promotions, error } = await supabase
       .from('promotions')
@@ -43,13 +49,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return Response.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) {
+      return Response.json({ success: false, error: guard.error }, { status: guard.status });
     }
 
     const body = await request.json();
@@ -127,13 +130,10 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return Response.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) {
+      return Response.json({ success: false, error: guard.error }, { status: guard.status });
     }
 
     const body = await request.json();
@@ -169,13 +169,10 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return Response.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) {
+      return Response.json({ success: false, error: guard.error }, { status: guard.status });
     }
 
     const { id } = await request.json();

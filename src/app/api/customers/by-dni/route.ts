@@ -1,10 +1,29 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Customer, CustomerInput } from '@/types';
 
+// Rate-limit en memoria por (dni:ip) para mitigar enumeración de DNIs.
+// Nota: en serverless el contador es por instancia; para un límite duro,
+// usar un store compartido (Redis/Upstash).
+const rateLimitMap = new Map<string, number[]>();
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const recent = (rateLimitMap.get(key) || []).filter((t) => now - t < 60000);
+  if (recent.length >= 8) return true;
+  recent.push(now);
+  rateLimitMap.set(key, recent);
+  if (rateLimitMap.size > 500) {
+    const oldest = rateLimitMap.keys().next().value;
+    if (oldest !== undefined) rateLimitMap.delete(oldest);
+  }
+  return false;
+}
+
 function getSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    { auth: { persistSession: false, autoRefreshToken: false } }
   );
 }
 
@@ -48,6 +67,15 @@ export async function POST(req: Request) {
     const dniClean = dni.replace(/\D/g, '');
     if (!/^\d{7,9}$/.test(dniClean)) {
       return Response.json({ error: 'DNI inválido' }, { status: 400 });
+    }
+
+    const forwarded = req.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0].trim() || 'unknown';
+    if (isRateLimited(`${dniClean}:${ip}`)) {
+      return Response.json(
+        { error: 'Demasiadas solicitudes. Intentá más tarde.' },
+        { status: 429 }
+      );
     }
 
     const supabase = getSupabaseClient();

@@ -63,7 +63,9 @@ function getSupabase(useServiceRole: boolean = true) {
     throw new Error('Missing Supabase configuration');
   }
 
-  return createClient(url, key);
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 async function sendOrderEmail(orderData: {

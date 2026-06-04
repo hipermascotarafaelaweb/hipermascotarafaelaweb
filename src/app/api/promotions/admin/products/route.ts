@@ -1,15 +1,13 @@
 import { createClient } from '@/utils/supabase/server';
+import { requireAdmin } from '@/utils/supabase/requireAdmin';
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return Response.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) {
+      return Response.json({ success: false, error: guard.error }, { status: guard.status });
     }
 
     const { promotion_id, product_ids } = await request.json();
@@ -39,13 +37,10 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return Response.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) {
+      return Response.json({ success: false, error: guard.error }, { status: guard.status });
     }
 
     const { promotion_id, product_id } = await request.json();
