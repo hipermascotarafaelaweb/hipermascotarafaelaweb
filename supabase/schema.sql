@@ -107,8 +107,11 @@ as $$
   );
 $$;
 
-revoke execute on function public.is_admin() from anon, public;
-grant execute on function public.is_admin() to authenticated, service_role;
+-- IMPORTANTE: anon necesita EXECUTE en is_admin() porque las policies "for all"
+-- de admin se evalúan también para lectura pública. Sin este grant, anon recibe
+-- "permission denied for function is_admin" al leer promotions/products/etc.
+-- La función solo devuelve true para usuarios marcados como admin, así que es seguro.
+grant execute on function public.is_admin() to anon, authenticated, service_role;
 
 drop policy if exists "perfil propio o admin" on public.profiles;
 create policy "perfil propio o admin" on public.profiles
