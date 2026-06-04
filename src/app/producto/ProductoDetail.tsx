@@ -161,7 +161,7 @@ export default function ProductoDetail() {
             <div className="absolute top-4 left-4 flex flex-col gap-2">
               {onSale && !outOfStock && (
                 <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-                  <Tag className="w-3.5 h-3.5 fill-current" /> -{discountPercent(product)}% OFF
+                  <Tag className="w-3.5 h-3.5 fill-current" /> -{discountPercent(displayProduct)}% OFF
                 </span>
               )}
               {product.is_featured && !outOfStock && (
