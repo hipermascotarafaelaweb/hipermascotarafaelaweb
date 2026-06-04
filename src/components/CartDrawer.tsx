@@ -41,6 +41,7 @@ export default function CartDrawer({
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [lookingUpDni, setLookingUpDni] = useState(false);
 
   const total = totalPrice();
   const couponDiscount = coupon ? (total * coupon.discount_percent) / 100 : 0;
@@ -50,6 +51,34 @@ export default function CartDrawer({
   const handleClose = () => {
     onClose();
     if (step === 'done') setStep('cart');
+  };
+
+  const lookupCustomerByDni = async (dni: string) => {
+    const dniClean = dni.replace(/\D/g, '');
+    if (!/^\d{7,9}$/.test(dniClean)) return;
+
+    setLookingUpDni(true);
+    try {
+      const response = await fetch('/api/customers/by-dni', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dni: dniClean }),
+      });
+      const data = await response.json();
+      if (data.customer) {
+        setCustomer({
+          first_name: data.customer.first_name,
+          last_name: data.customer.last_name,
+          dni: data.customer.dni,
+          phone: data.customer.phone,
+          address: data.customer.address || '',
+        });
+      }
+    } catch (err) {
+      console.error('Error looking up customer:', err);
+    } finally {
+      setLookingUpDni(false);
+    }
   };
 
   const applyCoupon = async () => {
@@ -223,8 +252,7 @@ export default function CartDrawer({
                 ¡Gracias por tu pedido! <PartyPopper className="w-5 h-5 text-brand-600" />
               </h3>
               <p className="text-gray-500 text-sm max-w-xs mb-6">
-                Te abrimos WhatsApp para confirmar la disponibilidad y coordinar el{' '}
-                <strong>envío gratis</strong>. Si no se abrió, tocá el botón de abajo.
+                Te abrimos WhatsApp para confirmar la disponibilidad y coordinar el envío. Si no se abrió, tocá el botón de abajo.
               </p>
               <a
                 href={sentLink}
@@ -361,7 +389,7 @@ export default function CartDrawer({
 
                 <div className="flex items-center gap-2 text-brand-700 bg-brand-50 rounded-xl px-3 py-2 text-sm font-semibold">
                   <Truck className="w-4 h-4" />
-                  Envío a domicilio gratis
+                  Coordinamos tu envío
                 </div>
 
                 <div className="space-y-2 pt-2">
@@ -399,14 +427,19 @@ export default function CartDrawer({
             <>
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 <p className="text-sm text-gray-500">
-                  Completá tus datos para coordinar el <strong>envío gratis</strong>. Tu
+                  Ingresá tu DNI para cargar automáticamente tus datos, o completá el formulario. Tu
                   pedido se confirma por WhatsApp.
                 </p>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">DNI</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">DNI {lookingUpDni && <span className="text-xs text-brand-600">buscando...</span>}</label>
                   <input
                     value={customer.dni}
-                    onChange={(e) => setCustomer({ dni: e.target.value })}
+                    onChange={(e) => {
+                      setCustomer({ dni: e.target.value });
+                      if (e.target.value.length >= 7) {
+                        lookupCustomerByDni(e.target.value);
+                      }
+                    }}
                     placeholder="30123456"
                     inputMode="numeric"
                     className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ${
@@ -421,7 +454,7 @@ export default function CartDrawer({
                 </div>
                 {field('phone', 'Teléfono', { placeholder: '3492 123456', inputMode: 'tel' })}
                 {field('address', 'Dirección de envío', {
-                  placeholder: 'Calle, número, barrio, ciudad',
+                  placeholder: 'Ej: Av. San Martín 123, Rafaela, Santa Fe',
                 })}
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Tus datos se usan únicamente para coordinar la entrega.{' '}

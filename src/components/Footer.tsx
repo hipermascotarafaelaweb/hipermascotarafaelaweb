@@ -12,7 +12,7 @@ export default function Footer() {
             <Logo className="h-16 sm:h-20 w-auto" />
             <p className="text-sm text-gray-700 mt-4 leading-relaxed">
               Accesorios para perros y gatos en {SITE.city}, {SITE.state}. Calidad y
-              atención personalizada, con envío gratis a domicilio.
+              atención personalizada para todo el país.
             </p>
           </div>
 

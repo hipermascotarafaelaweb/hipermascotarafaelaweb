@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     'juguetes perros',
     'juguetes gatos',
     'comederos',
-    'envío gratis',
+    'envío nacional',
   ],
   openGraph: {
     title: 'Hipermascota Rafaela | Accesorios para Mascotas',

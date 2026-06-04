@@ -73,7 +73,7 @@ export default function HomePage() {
           {[
             { n: 1, icon: ShoppingBag, title: 'Elegí tus productos', text: 'Sumá al carrito todo lo que quieras para tu mascota.' },
             { n: 2, icon: MessageCircle, title: 'Confirmá por WhatsApp', text: 'Completá tus datos y nos llega tu pedido al instante.' },
-            { n: 3, icon: Truck, title: 'Te lo enviamos gratis', text: 'Coordinamos la entrega a domicilio sin costo.' },
+            { n: 3, icon: Truck, title: 'Coordinamos tu envío', text: 'Confirmamos disponibilidad y coordinamos el envío a tu domicilio.' },
           ].map((step) => (
             <div key={step.n} className="relative bg-white rounded-3xl p-8 border border-gray-100 text-center">
               <span className="absolute -top-4 left-1/2 -translate-x-1/2 w-9 h-9 bg-brand-600 text-white rounded-full flex items-center justify-center font-extrabold shadow-md">

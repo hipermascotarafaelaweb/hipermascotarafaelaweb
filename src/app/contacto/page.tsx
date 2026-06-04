@@ -3,7 +3,7 @@ import { SITE, whatsappLink } from '@/config/site';
 
 export const metadata = {
   title: `Contacto | ${SITE.name}`,
-  description: `Contactanos por WhatsApp. Envío gratis a domicilio en ${SITE.city}.`,
+  description: `Contactanos por WhatsApp. Envío a todo el país.`,
 };
 
 export default function ContactoPage() {
@@ -23,8 +23,8 @@ export default function ContactoPage() {
           <div className="space-y-5">
             {[
               { icon: MapPin, title: 'Ubicación', value: `${SITE.city}, ${SITE.state}, ${SITE.country}` },
-              { icon: Truck, title: 'Envíos', value: 'A domicilio y siempre gratis' },
-              { icon: Clock, title: 'Horarios', value: 'Lunes a Sábado: 9:00 - 19:00' },
+              { icon: Truck, title: 'Envíos', value: 'A todo el país' },
+              { icon: Clock, title: 'Horarios', value: 'Lunes a Viernes: 09:00 - 19:00' },
             ].map((row) => (
               <div key={row.title} className="flex items-start gap-4">
                 <div className="w-11 h-11 bg-brand-100 rounded-xl flex items-center justify-center shrink-0">

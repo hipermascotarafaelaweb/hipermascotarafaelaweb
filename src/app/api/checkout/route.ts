@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
         phone: customer.phone,
         address: customer.address,
       },
-      { onConflict: 'dni', ignoreDuplicates: true }
+      { onConflict: 'dni' }
     );
 
     await sendOrderEmail({

@@ -43,8 +43,7 @@ Teléfono: ${customer.phone}
 -----------------------------------------
 ${itemLines}
 -----------------------------------------${subtotalLine}${discountLine}
-💰 *Total: $${formatNumber(total)}*
-🚚 Envío a domicilio: GRATIS${datosCliente}
+💰 *Total: $${formatNumber(total)}*${datosCliente}
 
 ¿Me confirman la disponibilidad para coordinar el envío? ¡Muchas gracias!`;
 
