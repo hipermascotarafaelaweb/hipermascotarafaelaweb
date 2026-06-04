@@ -10,10 +10,6 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
           <div className="col-span-1 sm:col-span-2 md:col-span-1">
             <Logo className="h-16 sm:h-20 w-auto" />
-            <p className="text-sm text-gray-700 mt-4 leading-relaxed">
-              Accesorios para perros y gatos en {SITE.city}, {SITE.state}. Calidad y
-              atención personalizada para todo el país.
-            </p>
           </div>
 
           <div>
