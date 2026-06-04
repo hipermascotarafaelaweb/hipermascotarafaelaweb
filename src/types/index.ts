@@ -85,12 +85,16 @@ export interface Coupon {
 
 export interface Promotion {
   id: number;
-  name: string;
+  title: string;
   description: string | null;
   discount_percent: number | null;
-  discount_amount: number | null;
+  discount_fixed: number | null;
+  discount_type: string | null;
+  image_url: string | null;
+  badge_label: string | null;
+  display_priority: number | null;
+  is_active: boolean;
   valid_from: string;
   valid_until: string | null;
-  active: boolean;
   created_at: string;
 }

@@ -59,7 +59,7 @@ export default function ProductoDetail() {
         // Fetch active promotions for this product
         const now = new Date().toISOString();
         const { data: promoData } = await supabase
-          .from('promotions_products')
+          .from('promotion_products')
           .select('promotion:promotions(*)')
           .eq('product_id', id);
 
@@ -67,7 +67,7 @@ export default function ProductoDetail() {
           const activePromos = (promoData as any[])
             .map(pp => pp.promotion as Promotion)
             .filter(promo =>
-              promo.active &&
+              promo.is_active &&
               new Date(promo.valid_from) <= new Date(now) &&
               (!promo.valid_until || new Date(promo.valid_until) >= new Date(now))
             );
@@ -224,15 +224,15 @@ export default function ProductoDetail() {
             <div className="bg-brand-50 border border-brand-200 rounded-xl p-4 mb-6">
               {promotions.map(promo => (
                 <div key={promo.id} className="mb-3 last:mb-0">
-                  <p className="font-bold text-brand-700 text-sm">{promo.name}</p>
+                  <p className="font-bold text-brand-700 text-sm">{promo.title}</p>
                   {promo.description && (
                     <p className="text-sm text-gray-600 mt-1">{promo.description}</p>
                   )}
-                  {(promo.discount_percent || promo.discount_amount) && (
+                  {(promo.discount_percent || promo.discount_fixed) && (
                     <p className="text-sm font-semibold text-brand-600 mt-1">
                       {promo.discount_percent && `${promo.discount_percent}% descuento`}
-                      {promo.discount_percent && promo.discount_amount && ' o '}
-                      {promo.discount_amount && `$${promo.discount_amount.toFixed(2)} descuento`}
+                      {promo.discount_percent && promo.discount_fixed && ' o '}
+                      {promo.discount_fixed && `$${promo.discount_fixed.toFixed(2)} descuento`}
                     </p>
                   )}
                 </div>
