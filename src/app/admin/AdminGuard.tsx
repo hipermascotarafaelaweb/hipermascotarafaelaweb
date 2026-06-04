@@ -18,12 +18,18 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user && !isLoginPage) {
-        router.replace('/admin/login');
-      } else if (data.user && isLoginPage) {
-        router.replace('/admin');
+      if (!data.user) {
+        // No hay usuario
+        if (!isLoginPage) {
+          router.replace('/admin/login');
+        }
       } else {
-        setUser(data.user);
+        // Hay usuario
+        if (isLoginPage) {
+          router.replace('/admin');
+        } else {
+          setUser(data.user);
+        }
       }
       setLoading(false);
     });
