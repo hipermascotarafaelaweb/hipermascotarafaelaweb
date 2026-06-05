@@ -14,7 +14,6 @@ const statusColors: Record<string, string> = {
 
 export default function ClientHistorial() {
   const [dni, setDni] = useState('');
-  const [phone, setPhone] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [searching, setSearching] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -22,8 +21,8 @@ export default function ClientHistorial() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dni.trim() || !phone.trim()) {
-      setError('Ingresá tu DNI y teléfono');
+    if (!dni.trim()) {
+      setError('Ingresá tu DNI');
       return;
     }
     setSearching(true);
@@ -35,7 +34,7 @@ export default function ClientHistorial() {
       const res = await fetch('/api/historial', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dni, phone }),
+        body: JSON.stringify({ dni }),
       });
 
       const data = await res.json();
@@ -66,7 +65,7 @@ export default function ClientHistorial() {
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 font-logo">
           Historial de compras
         </h1>
-        <p className="text-gray-500">Ingresá tu DNI y teléfono para ver tus pedidos</p>
+        <p className="text-gray-500">Ingresá tu DNI para ver tus pedidos</p>
       </div>
 
       <form onSubmit={handleSearch} className="mb-12 space-y-3">
@@ -77,15 +76,6 @@ export default function ClientHistorial() {
               value={dni}
               onChange={(e) => setDni(e.target.value)}
               placeholder="Ingresá tu DNI (sin puntos ni guiones)"
-              className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
-            />
-          </div>
-          <div className="relative flex-1">
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Tu teléfono"
               className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
             />
           </div>
