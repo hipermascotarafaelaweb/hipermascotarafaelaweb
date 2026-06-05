@@ -1,34 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
-const rateLimitMap = new Map<string, number[]>();
-
-function getRateLimitKey(dni: string, ip: string): string {
-  return `${dni}:${ip}`;
-}
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const times = rateLimitMap.get(key) || [];
-
-  const recentRequests = times.filter((t) => now - t < 60000);
-
-  if (recentRequests.length >= 5) {
-    return true;
-  }
-
-  recentRequests.push(now);
-  rateLimitMap.set(key, recentRequests);
-
-  if (rateLimitMap.size > 500) {
-    const oldestKey = rateLimitMap.keys().next().value;
-    if (oldestKey !== undefined) {
-      rateLimitMap.delete(oldestKey);
-    }
-  }
-
-  return false;
-}
+import { isRateLimited } from '@/utils/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,9 +30,8 @@ export async function POST(request: NextRequest) {
 
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded?.split(',')[0].trim() || 'unknown';
-    const key = getRateLimitKey(dni, ip);
 
-    if (isRateLimited(key)) {
+    if (await isRateLimited(`historial:${dni}:${ip}`, { limit: 5, windowMs: 60_000 })) {
       return NextResponse.json(
         { error: 'Demasiadas solicitudes. Intenta más tarde.' },
         { status: 429 }

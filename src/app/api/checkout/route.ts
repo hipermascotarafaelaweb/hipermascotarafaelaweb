@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { isPromotionActive, applyPromotionDiscount } from '@/utils/promotions';
+import { isRateLimited } from '@/utils/rateLimit';
 import type { Promotion } from '@/types';
 
 interface CartItem {
@@ -11,38 +12,9 @@ interface CartItem {
   price: number;
 }
 
-const RATE_LIMIT_REQUESTS = 5;
-const RATE_LIMIT_WINDOW_MS = 3600000;
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
 function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   return forwarded?.split(',')[0].trim() || 'unknown';
-}
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_REQUESTS) {
-    return false;
-  }
-
-  entry.count++;
-
-  if (rateLimitMap.size > 500) {
-    const firstKey = rateLimitMap.keys().next().value;
-    if (firstKey !== undefined) {
-      rateLimitMap.delete(firstKey);
-    }
-  }
-
-  return true;
 }
 
 function asInt(value: unknown): number {
@@ -124,7 +96,7 @@ Estado: Pendiente
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request);
-    if (!checkRateLimit(ip)) {
+    if (await isRateLimited(`checkout:${ip}`, { limit: 5, windowMs: 3_600_000 })) {
       return NextResponse.json(
         { error: 'Demasiados pedidos. Esperá un poco.' },
         { status: 429 }
