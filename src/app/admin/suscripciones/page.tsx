@@ -156,7 +156,6 @@ export default function SubscriptionsPage() {
               </table>
             </div>
           )}
-      </div>
     </div>
   );
 }

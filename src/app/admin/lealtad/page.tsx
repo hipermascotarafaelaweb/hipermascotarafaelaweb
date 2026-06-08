@@ -208,7 +208,6 @@ export default function LoyaltyPage() {
               </table>
             </div>
           )}
-        </div>
     </div>
   );
 }

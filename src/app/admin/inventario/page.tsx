@@ -140,7 +140,6 @@ export default function InventoryPage() {
               })}
             </div>
           )}
-        </div>
     </div>
   );
 }
