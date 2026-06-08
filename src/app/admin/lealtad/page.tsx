@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Trophy, User, Plus, RefreshCw } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import AdminShell from '../AdminShell';
 import AdminGuard from '../AdminGuard';
 
 export default function LoyaltyPage() {
@@ -92,8 +91,7 @@ export default function LoyaltyPage() {
 
   return (
     <AdminGuard>
-      <AdminShell>
-        <div className="space-y-6">
+      <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Programa de Lealtad</h1>
             <p className="text-gray-600 mt-1">Puntos y recompensas de clientes</p>
@@ -213,7 +211,6 @@ export default function LoyaltyPage() {
             </div>
           )}
         </div>
-      </AdminShell>
     </AdminGuard>
   );
 }

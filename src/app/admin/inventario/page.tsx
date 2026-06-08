@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Loader2, TrendingUp } from 'lucide-react';
-import AdminShell from '../AdminShell';
 import AdminGuard from '../AdminGuard';
 import { formatPrice } from '@/utils/format';
 
@@ -67,8 +66,7 @@ export default function InventoryPage() {
 
   return (
     <AdminGuard>
-      <AdminShell>
-        <div className="space-y-6">
+      <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Alertas de Inventario</h1>
             <p className="text-gray-600 mt-1">Productos con bajo stock</p>
