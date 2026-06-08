@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear/actualizar cliente ANTES de insertar el pedido (por foreign key)
-    await supabase.from('customers').upsert(
+    const { error: customerError } = await supabase.from('customers').upsert(
       {
         dni: customer.dni,
         first_name: customer.first_name,
@@ -254,6 +254,14 @@ export async function POST(request: NextRequest) {
       },
       { onConflict: 'dni' }
     );
+
+    if (customerError) {
+      console.error('Customer upsert error:', customerError);
+      return NextResponse.json(
+        { error: 'Error al guardar datos del cliente' },
+        { status: 500 }
+      );
+    }
 
     // Insertar pedido directamente
     const { data: order, error: orderError } = await supabase
