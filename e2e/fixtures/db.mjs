@@ -22,6 +22,9 @@ export const products = [
     stock: 25,
     is_featured: true,
     created_at: '2024-03-01T00:00:00Z',
+    size: 'grande',
+    life_stage: 'adulto',
+    diet: 'sin_granos',
     category: { id: 1, name: 'Alimentos', slug: 'alimentos', created_at: '2024-01-01T00:00:00Z' },
   },
   {
@@ -37,6 +40,9 @@ export const products = [
     stock: 10,
     is_featured: false,
     created_at: '2024-03-02T00:00:00Z',
+    size: 'chico',
+    life_stage: 'adulto',
+    diet: 'estandar',
     category: { id: 2, name: 'Juguetes', slug: 'juguetes', created_at: '2024-01-01T00:00:00Z' },
   },
   {
@@ -52,6 +58,9 @@ export const products = [
     stock: 0,
     is_featured: false,
     created_at: '2024-03-03T00:00:00Z',
+    size: 'grande',
+    life_stage: 'cachorro',
+    diet: 'estandar',
     category: { id: 2, name: 'Juguetes', slug: 'juguetes', created_at: '2024-01-01T00:00:00Z' },
   },
 ];

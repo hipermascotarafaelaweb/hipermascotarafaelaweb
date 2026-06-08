@@ -40,4 +40,14 @@ test.describe('Catálogo /productos', () => {
     await page.getByPlaceholder('Buscar productos...').fill('xyz-no-existe');
     await expect(page.getByText('No encontramos productos')).toBeVisible();
   });
+
+  test('los filtros avanzados (tamaño) acotan el catálogo', async ({ page }) => {
+    await page.getByRole('button', { name: 'Filtrar' }).click();
+    const adv = page.getByTestId('advanced-filters');
+    await expect(adv).toBeVisible();
+    // Tamaño = Grande → Alimento (grande) + Hueso (grande), no Pelota (chico)
+    await adv.getByLabel('Tamaño').selectOption('grande');
+    await expect(page.getByText('2 productos')).toBeVisible();
+    await expect(page.getByText('Pelota Mordillo Gato')).toHaveCount(0);
+  });
 });

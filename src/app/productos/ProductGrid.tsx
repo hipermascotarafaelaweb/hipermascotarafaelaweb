@@ -37,8 +37,18 @@ export default function ProductGrid({
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  // Filtros avanzados (migración 0005). Solo se muestran si hay datos.
+  const [size, setSize] = useState('');
+  const [lifeStage, setLifeStage] = useState('');
+  const [diet, setDiet] = useState('');
 
-  const hasActiveFilters = pet !== 'all' || selectedCategory !== 'all' || minPrice || maxPrice || onSaleOnly || sort !== 'recent';
+  const uniq = (vals: (string | null | undefined)[]) =>
+    [...new Set(vals.filter((v): v is string => !!v))];
+  const sizeOptions = useMemo(() => uniq(products.map((p) => p.size)), [products]);
+  const lifeStageOptions = useMemo(() => uniq(products.map((p) => p.life_stage)), [products]);
+  const dietOptions = useMemo(() => uniq(products.map((p) => p.diet)), [products]);
+
+  const hasActiveFilters = pet !== 'all' || selectedCategory !== 'all' || minPrice || maxPrice || onSaleOnly || sort !== 'recent' || size || lifeStage || diet;
 
   const clearAllFilters = () => {
     setPet('all');
@@ -47,6 +57,9 @@ export default function ProductGrid({
     setMaxPrice('');
     setOnSaleOnly(false);
     setSort('recent');
+    setSize('');
+    setLifeStage('');
+    setDiet('');
   };
 
   const filtered = useMemo(() => {
@@ -82,11 +95,18 @@ export default function ProductGrid({
       result = result.filter((p) => p.sale_price && p.sale_price > 0 && p.sale_price < p.price);
     }
 
+    if (size) result = result.filter((p) => p.size === size);
+    if (lifeStage) result = result.filter((p) => p.life_stage === lifeStage);
+    if (diet) result = result.filter((p) => p.diet === diet);
+
     if (sort === 'price_asc') result = [...result].sort((a, b) => a.price - b.price);
     if (sort === 'price_desc') result = [...result].sort((a, b) => b.price - a.price);
 
     return result;
-  }, [products, selectedCategory, pet, sort, search, minPrice, maxPrice, onSaleOnly]);
+  }, [products, selectedCategory, pet, sort, search, minPrice, maxPrice, onSaleOnly, size, lifeStage, diet]);
+
+  const filterLabel = (v: string) =>
+    v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 
   return (
     <div>
@@ -214,6 +234,57 @@ export default function ProductGrid({
               </select>
             </div>
           </div>
+
+          {/* Filtros avanzados (aparecen solo si hay datos cargados) */}
+          {(sizeOptions.length > 0 || lifeStageOptions.length > 0 || dietOptions.length > 0) && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="advanced-filters">
+              {sizeOptions.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tamaño</label>
+                  <select
+                    value={size}
+                    onChange={(e) => setSize(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
+                    <option value="">Todos</option>
+                    {sizeOptions.map((o) => (
+                      <option key={o} value={o}>{filterLabel(o)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {lifeStageOptions.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Edad</label>
+                  <select
+                    value={lifeStage}
+                    onChange={(e) => setLifeStage(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
+                    <option value="">Todas</option>
+                    {lifeStageOptions.map((o) => (
+                      <option key={o} value={o}>{filterLabel(o)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {dietOptions.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Dieta</label>
+                  <select
+                    value={diet}
+                    onChange={(e) => setDiet(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
+                    <option value="">Todas</option>
+                    {dietOptions.map((o) => (
+                      <option key={o} value={o}>{filterLabel(o)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Oferta + Limpiar */}
           <div className="flex items-center justify-between">

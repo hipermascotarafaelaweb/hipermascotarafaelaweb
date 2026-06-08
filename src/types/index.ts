@@ -24,6 +24,11 @@ export interface Product {
   is_featured: boolean;
   created_at: string;
   category?: Category;
+  /** Filtros avanzados (opcionales; migración 0005). El catálogo los muestra
+   *  solo si hay productos que los tengan poblados. */
+  size?: string | null;        // chico | mediano | grande
+  life_stage?: string | null;  // cachorro | adulto | senior
+  diet?: string | null;        // sin_granos | hipoalergenico | estandar
 }
 
 export interface CartItem {
