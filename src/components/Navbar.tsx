@@ -18,7 +18,9 @@ const links = [
 export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const totalItems = useCartStore((s) => s.totalItems);
+  // Suscribirse a `items` (no solo a la función) para que el badge se
+  // re-renderice cuando cambia el carrito.
+  const items = useCartStore((s) => s.items);
   const pathname = usePathname();
   const mounted = useMounted();
 
@@ -29,7 +31,7 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const count = mounted ? totalItems() : 0;
+  const count = mounted ? items.reduce((sum, i) => sum + i.quantity, 0) : 0;
 
   return (
     <header
