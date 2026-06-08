@@ -117,7 +117,7 @@ export default function ClientHistorial() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="font-extrabold text-gray-900">Pedido #{order.id}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{formatDate(order.created_at)}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{formatDate(order.created_at)}</p>
                 </div>
                 <span
                   className={`text-xs font-bold px-3 py-1.5 rounded-full ${

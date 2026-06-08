@@ -51,12 +51,12 @@ export default function ProductCard({ product, promotion, index = 0 }: { product
             </div>
           )}
           {onSale && !outOfStock && !promotion && (
-            <span className="bg-red-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
+            <span className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
               <Tag className="w-3 h-3 fill-current" /> -{discountPercent(product)}%
             </span>
           )}
           {product.is_featured && !outOfStock && (
-            <span className="bg-brand-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
+            <span className="bg-brand-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1">
               <Star className="w-3 h-3 fill-current" /> Destacado
             </span>
           )}
@@ -94,7 +94,7 @@ export default function ProductCard({ product, promotion, index = 0 }: { product
         <div className="mt-auto pt-3 border-t border-gray-50">
           <div className="mb-2.5">
             {onSale && (
-              <span className="block text-xs text-gray-400 line-through leading-none">
+              <span className="block text-xs text-gray-500 line-through leading-none">
                 {formatPrice(product.price)}
               </span>
             )}

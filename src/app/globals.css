@@ -16,8 +16,10 @@
   --color-brand-300: #b5d96f;
   --color-brand-400: #9ccc44;
   --color-brand-500: #84bf2f;
-  --color-brand-600: #689a22;
-  --color-brand-700: #4f761d;
+  /* 600/700 oscurecidos para que el texto blanco sobre botones y el texto de
+     marca sobre blanco cumplan contraste AA (>=4.5:1). Mismo tono lima. */
+  --color-brand-600: #54801b;
+  --color-brand-700: #456b1a;
   --color-brand-800: #3f5d1c;
   --color-brand-900: #354f1c;
 

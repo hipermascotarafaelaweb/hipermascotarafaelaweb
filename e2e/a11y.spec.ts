@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-// Accesibilidad: sin violaciones críticas/serias en las páginas clave.
+// Accesibilidad: cero violaciones serias/críticas (incluye color-contrast) en
+// las páginas públicas clave.
 const pages = [
   { name: 'home', path: '/' },
   { name: 'catálogo', path: '/productos' },
@@ -21,22 +22,14 @@ for (const p of pages) {
       (v) => v.impact === 'critical' || v.impact === 'serious'
     );
 
-    // color-contrast es deuda de diseño (requiere decidir tonos de marca): se
-    // reporta como warning pero no bloquea. El resto sí debe estar en cero.
-    const contrast = seriousOrCritical.filter((v) => v.id === 'color-contrast');
-    const blocking = seriousOrCritical.filter((v) => v.id !== 'color-contrast');
-
-    if (contrast.length) {
+    if (seriousOrCritical.length) {
       console.log(
-        `[a11y:${p.name}] WARN color-contrast: ${contrast.reduce((n, v) => n + v.nodes.length, 0)} nodos (deuda de diseño)`
+        `[a11y:${p.name}]`,
+        seriousOrCritical
+          .map((v) => `${v.id} (${v.impact}) x${v.nodes.length}`)
+          .join(', ')
       );
     }
-    if (blocking.length) {
-      console.log(
-        `[a11y:${p.name}] BLOQUEANTE:`,
-        blocking.map((v) => `${v.id} (${v.impact}) x${v.nodes.length}`).join(', ')
-      );
-    }
-    expect(blocking).toEqual([]);
+    expect(seriousOrCritical).toEqual([]);
   });
 }

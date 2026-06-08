@@ -161,12 +161,12 @@ export default function ProductoDetail() {
             )}
             <div className="absolute top-4 left-4 flex flex-col gap-2">
               {onSale && !outOfStock && (
-                <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                <span className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
                   <Tag className="w-3.5 h-3.5 fill-current" /> -{discountPercent(displayProduct)}% OFF
                 </span>
               )}
               {product.is_featured && !outOfStock && (
-                <span className="bg-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                <span className="bg-brand-700 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
                   <Star className="w-3.5 h-3.5 fill-current" /> Destacado
                 </span>
               )}
@@ -211,7 +211,7 @@ export default function ProductoDetail() {
             </p>
             {onSale && (
               <>
-                <span className="text-xl text-gray-400 line-through">{formatPrice(product.price)}</span>
+                <span className="text-xl text-gray-500 line-through">{formatPrice(product.price)}</span>
                 <span className="bg-red-100 text-red-700 text-sm font-bold px-2 py-0.5 rounded-lg">
                   -{discountPercent(displayProduct)}%
                 </span>

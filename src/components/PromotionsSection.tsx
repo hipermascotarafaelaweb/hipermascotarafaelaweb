@@ -42,7 +42,7 @@ export default function PromotionsSection({ promotions }: PromotionsSectionProps
                 )}
 
                 {/* Discount Badge */}
-                <div className="absolute top-3 right-3 bg-brand-500 text-white px-3 py-1 rounded-full font-bold text-sm">
+                <div className="absolute top-3 right-3 bg-brand-700 text-white px-3 py-1 rounded-full font-bold text-sm">
                   {formatDiscount(promotion)}
                 </div>
               </div>

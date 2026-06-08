@@ -111,8 +111,18 @@ create policy "admin loyalty" on public.loyalty_points
 - **CI** (`.github/workflows/ci.yml`): lint → unit → build → e2e en cada push.
 
 ## Deuda conocida
-- **a11y color-contrast:** ~13 nodos en home, 10 en catálogo (tonos `text-gray-400/500`
-  y badges). Requiere decidir tonos de marca; el test los reporta como warning.
-- **Sentry:** solo está el init de cliente (`sentry.client.config.ts`). Faltan
-  `sentry.server.config.ts` + `instrumentation.ts` para capturar errores
-  server-side (rutas API). DSN no seteado → hoy no reporta nada.
+- **Sentry DSN:** el código ya inicializa Sentry en cliente
+  (`sentry.client.config.ts`) y servidor (`src/instrumentation.ts`, captura
+  errores de rutas API y server components vía `onRequestError`). Falta setear
+  `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` en Vercel para que reporte.
+- **a11y contraste en admin:** las páginas públicas ya cumplen AA (test las
+  bloquea). El panel `/admin` (tras login) aún usa `text-gray-400` en varios
+  lugares; no está auditado por el E2E.
+
+## Resuelto
+- ✅ **a11y color-contrast (público):** paleta `brand-600/700` oscurecida +
+  badges a tonos accesibles. Home/catálogo/historial sin violaciones AA.
+- ✅ **Sentry server-side:** `src/instrumentation.ts` con `register()` +
+  `onRequestError`.
+- ✅ **Bug `aria-hidden-focus`:** `CartDrawer` cerrado ahora usa `inert`.
+- ✅ **Bug badge del carrito:** `Navbar` se suscribe a `items`.
