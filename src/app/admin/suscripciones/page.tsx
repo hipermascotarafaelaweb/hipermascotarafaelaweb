@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Pause, Play, Trash2, Loader2, Calendar, User, Package } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import AdminGuard from '../AdminGuard';
 import { formatPrice } from '@/utils/format';
 
 interface Subscription {
@@ -74,8 +73,7 @@ export default function SubscriptionsPage() {
   };
 
   return (
-    <AdminGuard>
-      <div className="space-y-6">
+    <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Suscripciones</h1>
             <p className="text-gray-600 mt-1">Gestiona las suscripciones recurrentes de clientes</p>
@@ -159,6 +157,6 @@ export default function SubscriptionsPage() {
             </div>
           )}
       </div>
-    </AdminGuard>
+    </div>
   );
 }
