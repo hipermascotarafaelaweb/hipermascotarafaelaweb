@@ -32,7 +32,11 @@ function getSupabase(useServiceRole: boolean = true) {
     : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    throw new Error('Missing Supabase configuration');
+    const missing = [];
+    if (!url) missing.push('NEXT_PUBLIC_SUPABASE_URL');
+    if (!key) missing.push(useServiceRole ? 'SUPABASE_SERVICE_ROLE_KEY' : 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    console.error('Missing env vars:', missing);
+    throw new Error(`Missing Supabase configuration: ${missing.join(', ')}`);
   }
 
   return createClient(url, key, {
