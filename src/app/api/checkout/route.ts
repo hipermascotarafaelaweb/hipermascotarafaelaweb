@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
       id: orderId,
       customer_name: customerFullName,
       customer_phone: customer.phone,
-      customer_address: customer.address,
+      customer_address: fullAddress,
       items: orderItems,
       total_amount: totalAmount,
       coupon_code: couponCode || null,
