@@ -64,8 +64,8 @@ describe('POST /api/checkout', () => {
         products: { data: [{ id: 1, name: 'Alimento', price: 1000, sale_price: null }], error: null },
         promotion_products: { data: [], error: null },
         customers: { data: null, error: null },
+        orders: { data: { id: 123 }, error: null },
       },
-      ...okOrderRpc,
     };
     const res = await call({ items: [{ product_id: 1, qty: 2 }], customer });
     expect(res.status).toBe(201);
@@ -88,8 +88,8 @@ describe('POST /api/checkout', () => {
           error: null,
         },
         customers: { data: null, error: null },
+        orders: { data: { id: 123 }, error: null },
       },
-      ...okOrderRpc,
     };
     const res = await call({ items: [{ product_id: 1, qty: 1 }], customer });
     const { order } = await res.json();
@@ -104,9 +104,9 @@ describe('POST /api/checkout', () => {
         promotion_products: { data: [], error: null },
         coupons: { data: { id: 9, discount_percent: 10, max_uses: 100, uses_count: 0 }, error: null },
         customers: { data: null, error: null },
+        orders: { data: { id: 123 }, error: null },
       },
       rpc: {
-        create_order_with_stock: { data: { id: 123 }, error: null },
         increment_coupon_use: { data: null, error: null },
       },
     };
@@ -130,13 +130,14 @@ describe('POST /api/checkout', () => {
     expect((await res.json()).error).toMatch(/cupón inválido/i);
   });
 
-  it('500 si la RPC de creación de pedido falla', async () => {
+  it('500 si la inserción de pedido falla', async () => {
     mockConfig = {
       tables: {
         products: { data: [{ id: 1, name: 'Alimento', price: 1000, sale_price: null }], error: null },
         promotion_products: { data: [], error: null },
+        customers: { data: null, error: null },
+        orders: { data: null, error: { message: 'boom' } },
       },
-      rpc: { create_order_with_stock: { data: null, error: { message: 'boom' } } },
     };
     expect((await call({ items: [{ product_id: 1, qty: 1 }], customer })).status).toBe(500);
   });
