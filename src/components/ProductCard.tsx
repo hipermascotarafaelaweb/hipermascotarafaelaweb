@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, PawPrint, Check, Star, Tag } from 'lucide-react';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import type { Product, Promotion } from '@/types';
 import { useCartStore } from '@/store/cart';
 import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/utils/format';
@@ -11,7 +11,7 @@ import { cn } from '@/utils/cn';
 import PromotionBadge from './PromotionBadge';
 import { isPromotionActive } from '@/utils/promotions';
 
-export default function ProductCard({ product, promotion, index = 0 }: { product: Product; promotion?: Promotion; index?: number }) {
+function ProductCard({ product, promotion, index = 0 }: { product: Product; promotion?: Promotion; index?: number }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const outOfStock = product.stock <= 0;
@@ -133,3 +133,9 @@ export default function ProductCard({ product, promotion, index = 0 }: { product
     </div>
   );
 }
+
+export default memo(ProductCard, (prev, next) =>
+  prev.product.id === next.product.id &&
+  prev.promotion?.id === next.promotion?.id &&
+  prev.index === next.index
+);
