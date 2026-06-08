@@ -138,6 +138,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const phoneClean = customer.phone.replace(/\D/g, '');
+    if (!/^\d{10}$/.test(phoneClean) && !/^549\d{9}$/.test(phoneClean)) {
+      return NextResponse.json(
+        { error: 'Teléfono inválido' },
+        { status: 400 }
+      );
+    }
+
     const fullAddress = `${customer.street}, ${customer.city}, ${customer.province} ${customer.postal_code}`;
 
     const supabase = getSupabase();
@@ -198,6 +206,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (qty <= 0) {
+        return NextResponse.json(
+          { error: `Cantidad inválida para ${product.name}` },
+          { status: 400 }
+        );
+      }
+
+      if (qty > product.stock) {
+        return NextResponse.json(
+          { error: `Stock insuficiente para ${product.name}. Disponible: ${product.stock}` },
+          { status: 400 }
+        );
+      }
+
       const base = product.sale_price ?? product.price;
       const promo = promoByProduct.get(productId);
       const price = promo
@@ -227,13 +249,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Cupón inválido' }, { status: 400 });
       }
 
+      // Validar que el cupón no esté agotado ANTES de intentar incrementar
+      if (coupon.max_uses !== null && coupon.uses_count >= coupon.max_uses) {
+        return NextResponse.json({ error: 'Cupón agotado' }, { status: 400 });
+      }
+
+      // Intentar incrementar uso atomicamente
       const { error: incError } = await supabase.rpc(
         'increment_coupon_use',
         { coupon_id: coupon.id }
       );
 
       if (incError) {
-        return NextResponse.json({ error: 'Cupón agotado' }, { status: 400 });
+        return NextResponse.json({ error: 'Cupón agotado o error al validar' }, { status: 400 });
       }
 
       couponDiscount = Math.round((subtotal * coupon.discount_percent) / 100);
@@ -298,10 +326,16 @@ export async function POST(request: NextRequest) {
 
     // Decrementar stock para cada producto
     for (const item of orderItems) {
-      await supabase.rpc('decrement_stock', {
+      const { error: decrementError } = await supabase.rpc('decrement_stock', {
         p_product_id: item.product_id,
         p_qty: item.qty,
       });
+
+      if (decrementError) {
+        console.error(`Error decrementing stock for product ${item.product_id}:`, decrementError);
+        // Log el error pero no falles - el pedido ya fue creado
+        // TODO: Implementar sistema de sincronización para reconciliar stock
+      }
     }
 
     await sendOrderEmail({
@@ -328,10 +362,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Checkout error:', errorMessage, error);
+    console.error('Checkout error:', error instanceof Error ? error.message : String(error), error);
     return NextResponse.json(
-      { error: 'Error del servidor', details: errorMessage },
+      { error: 'Error al procesar el pedido. Intenta nuevamente.' },
       { status: 500 }
     );
   }

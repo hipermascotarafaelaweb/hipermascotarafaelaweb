@@ -127,7 +127,10 @@ export default function CartDrawer({
     if (!customer.last_name.trim()) e.last_name = 'Ingresá tu apellido';
     const dniClean = customer.dni.replace(/\D/g, '');
     if (!/^\d{7,9}$/.test(dniClean)) e.dni = 'DNI inválido (7 a 9 dígitos)';
-    if (!/^[\d\s+()-]{6,}$/.test(customer.phone.trim())) e.phone = 'Teléfono inválido';
+    const phoneClean = customer.phone.trim().replace(/\D/g, '');
+    if (!/^\d{10}$/.test(phoneClean) && !/^549\d{9}$/.test(phoneClean)) {
+      e.phone = 'Teléfono inválido (10 dígitos)';
+    }
     if (!customer.street.trim()) e.street = 'Ingresá calle y número';
     if (!customer.city.trim()) e.city = 'Ingresá la ciudad';
     if (!customer.province.trim()) e.province = 'Ingresá la provincia';
