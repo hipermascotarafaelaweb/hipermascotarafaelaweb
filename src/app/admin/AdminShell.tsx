@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Package, ClipboardList, Users, LogOut, ExternalLink, Tag, BarChart3, Ticket, Zap, Repeat, AlertTriangle, Trophy } from 'lucide-react';
@@ -22,14 +23,24 @@ const navItems = [
 ];
 
 export default function AdminShell({
-  user,
+  user: initialUser,
   children,
 }: {
-  user: User;
+  user?: User;
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(initialUser || null);
+
+  useEffect(() => {
+    if (!initialUser) {
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) setUser(user);
+      });
+    }
+  }, [initialUser]);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -77,7 +88,7 @@ export default function AdminShell({
             Ver tienda
           </Link>
           <div className="px-4 py-1.5">
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            <p className="text-xs text-gray-400 truncate">{user?.email || 'Admin'}</p>
           </div>
           <button
             onClick={handleLogout}
