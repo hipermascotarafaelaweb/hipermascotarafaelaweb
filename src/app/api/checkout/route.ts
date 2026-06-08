@@ -243,9 +243,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: order, error: orderError } = await supabase.rpc(
-      'create_order_with_stock',
-      {
+    // Insertar pedido directamente
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
         customer_name: `${customer.first_name} ${customer.last_name}`,
         customer_dni: customer.dni,
         customer_phone: customer.phone,
@@ -255,11 +256,12 @@ export async function POST(request: NextRequest) {
         coupon_code: couponCode || null,
         coupon_discount: couponDiscount,
         status: 'Pendiente',
-      }
-    );
+      })
+      .select('id')
+      .single();
 
     if (orderError || !order) {
-      console.error('Order RPC error:', orderError);
+      console.error('Order insert error:', orderError);
       return NextResponse.json(
         { error: 'Error al crear pedido' },
         { status: 500 }
@@ -267,7 +269,15 @@ export async function POST(request: NextRequest) {
     }
 
     const customerFullName = `${customer.first_name} ${customer.last_name}`;
-    const orderId = order.id ?? 0;
+    const orderId = order.id;
+
+    // Decrementar stock para cada producto
+    for (const item of orderItems) {
+      await supabase.rpc('decrement_stock', {
+        p_product_id: item.product_id,
+        p_qty: item.qty,
+      });
+    }
 
     await supabase.from('customers').upsert(
       {
