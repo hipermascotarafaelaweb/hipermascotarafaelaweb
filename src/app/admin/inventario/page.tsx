@@ -64,11 +64,10 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Alertas de Inventario</h1>
-            <p className="text-gray-600 mt-1">Productos con bajo stock</p>
-          </div>
+    <div>
+      <h1 className="text-2xl font-extrabold text-gray-900 mb-6 font-logo">Alertas de Inventario</h1>
+
+      <div className="space-y-6">
 
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-lg">
@@ -140,6 +139,7 @@ export default function InventoryPage() {
               })}
             </div>
           )}
+      </div>
     </div>
   );
 }

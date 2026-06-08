@@ -73,11 +73,10 @@ export default function SubscriptionsPage() {
   };
 
   return (
-    <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Suscripciones</h1>
-            <p className="text-gray-600 mt-1">Gestiona las suscripciones recurrentes de clientes</p>
-          </div>
+    <div>
+      <h1 className="text-2xl font-extrabold text-gray-900 mb-6 font-logo">Suscripciones</h1>
+
+      <div className="space-y-6">
 
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-lg">
@@ -156,6 +155,7 @@ export default function SubscriptionsPage() {
               </table>
             </div>
           )}
+      </div>
     </div>
   );
 }

@@ -89,11 +89,10 @@ export default function LoyaltyPage() {
   const totalPoints = Array.from(loyaltyData.values()).reduce((sum, p) => sum + p, 0);
 
   return (
-    <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Programa de Lealtad</h1>
-            <p className="text-gray-600 mt-1">Puntos y recompensas de clientes</p>
-          </div>
+    <div>
+      <h1 className="text-2xl font-extrabold text-gray-900 mb-6 font-logo">Programa de Lealtad</h1>
+
+      <div className="space-y-6">
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-brand-50 border border-brand-200 rounded-lg p-4">
@@ -208,6 +207,7 @@ export default function LoyaltyPage() {
               </table>
             </div>
           )}
+      </div>
     </div>
   );
 }
