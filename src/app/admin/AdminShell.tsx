@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Package, ClipboardList, Users, LogOut, ExternalLink, Tag, BarChart3, Ticket, Zap, Repeat, AlertTriangle, Trophy } from 'lucide-react';
+import { Package, ClipboardList, Users, LogOut, ExternalLink, Tag, BarChart3, Ticket, Zap, AlertTriangle, Trophy } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import Logo from '@/components/Logo';
@@ -17,7 +17,6 @@ const navItems = [
   { href: '/admin/promociones', label: 'Promociones', icon: Zap },
   { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardList },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
-  { href: '/admin/suscripciones', label: 'Suscripciones', icon: Repeat },
   { href: '/admin/inventario', label: 'Inventario', icon: AlertTriangle },
   { href: '/admin/lealtad', label: 'Lealtad', icon: Trophy },
 ];
