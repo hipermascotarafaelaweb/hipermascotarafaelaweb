@@ -96,7 +96,7 @@ Estado: Pendiente
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request);
-    if (await isRateLimited(`checkout:${ip}`, { limit: 5, windowMs: 3_600_000 })) {
+    if (await isRateLimited(`checkout:${ip}`, { limit: 100, windowMs: 3_600_000 })) {
       return NextResponse.json(
         { error: 'Demasiados pedidos. Esperá un poco.' },
         { status: 429 }
