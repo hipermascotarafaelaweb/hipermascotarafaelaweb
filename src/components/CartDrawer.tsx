@@ -223,6 +223,9 @@ export default function CartDrawer({
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-hidden={!open}
+        // `inert` cuando está cerrado: saca el subtree del orden de tabulación y
+        // del árbol de accesibilidad (evita la violación aria-hidden-focus).
+        inert={!open}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
