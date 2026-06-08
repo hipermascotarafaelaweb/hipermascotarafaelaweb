@@ -243,6 +243,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Crear/actualizar cliente ANTES de insertar el pedido (por foreign key)
+    await supabase.from('customers').upsert(
+      {
+        dni: customer.dni,
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+        phone: customer.phone,
+        address: fullAddress,
+      },
+      { onConflict: 'dni' }
+    );
+
     // Insertar pedido directamente
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -279,17 +291,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    await supabase.from('customers').upsert(
-      {
-        dni: customer.dni,
-        first_name: customer.first_name,
-        last_name: customer.last_name,
-        phone: customer.phone,
-        address: fullAddress,
-      },
-      { onConflict: 'dni' }
-    );
-
     await sendOrderEmail({
       id: orderId,
       customer_name: customerFullName,
@@ -314,9 +315,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Checkout error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Checkout error:', errorMessage, error);
     return NextResponse.json(
-      { error: 'Error del servidor' },
+      { error: 'Error del servidor', details: errorMessage },
       { status: 500 }
     );
   }
