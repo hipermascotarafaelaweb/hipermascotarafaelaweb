@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
 
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, price, sale_price')
+      .select('id, name, price, sale_price, stock')
       .in('id', productIds);
 
     if (productsError || !products) {
