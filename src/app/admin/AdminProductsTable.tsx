@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, X, Save, Upload, PawPrint, Search, Star, ImagePlu
 import { createClient } from '@/utils/supabase/client';
 import type { Product, Category, PetType } from '@/types';
 import { formatPrice, hasDiscount } from '@/utils/format';
+import { compressImage } from '@/utils/imageCompress';
 
 interface ProductForm {
   name: string;
@@ -94,9 +95,10 @@ export default function AdminProductsTable({
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
-    const ext = file.name.split('.').pop();
+    const compressed = await compressImage(file);
+    const ext = compressed.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from('products').upload(fileName, file, { upsert: true });
+    const { error } = await supabase.storage.from('products').upload(fileName, compressed, { upsert: true });
     if (error) return null;
     const { data } = supabase.storage.from('products').getPublicUrl(fileName);
     return data.publicUrl;
