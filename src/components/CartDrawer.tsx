@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { useCustomerStore } from '@/store/customer';
 import { generateWhatsAppLink } from '@/utils/whatsapp';
-import { formatPrice, effectivePrice, hasDiscount } from '@/utils/format';
+import { formatPrice, effectivePrice, hasDiscount, tieredUnitPrice } from '@/utils/format';
 import { useToast } from '@/hooks/useToast';
 import type { CustomerInput, Coupon } from '@/types';
 
@@ -307,6 +307,7 @@ export default function CartDrawer({
               <ul className="flex-1 overflow-y-auto p-4 space-y-3">
                 {items.map((item) => {
                   const lowStock = item.product.stock > 0 && item.product.stock <= 3;
+                  const unitPrice = tieredUnitPrice(item.product, item.quantity);
                   return (
                     <li key={item.product.id} className="flex gap-3 bg-gray-50 rounded-2xl p-4">
                       <div className="flex-1 min-w-0">
@@ -314,8 +315,8 @@ export default function CartDrawer({
                           {item.product.name}
                         </h3>
                         <p className="text-brand-700 font-bold text-sm mt-0.5">
-                          {formatPrice(effectivePrice(item.product))}
-                          {hasDiscount(item.product) && (
+                          {formatPrice(unitPrice)}
+                          {hasDiscount(item.product) && unitPrice === effectivePrice(item.product) && (
                             <span className="text-gray-400 font-normal line-through ml-1.5">
                               {formatPrice(item.product.price)}
                             </span>
@@ -357,7 +358,7 @@ export default function CartDrawer({
                           <Trash2 className="w-4 h-4" />
                         </button>
                         <span className="text-sm font-extrabold text-gray-900">
-                          {formatPrice(effectivePrice(item.product) * item.quantity)}
+                          {formatPrice(unitPrice * item.quantity)}
                         </span>
                       </div>
                     </li>

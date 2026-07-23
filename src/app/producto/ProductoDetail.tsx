@@ -6,15 +6,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowLeft, ShoppingCart, Check, Minus, Plus, MessageCircle,
-  PawPrint, Truck, ShieldCheck, Loader2, Star, Tag,
+  PawPrint, Truck, ShieldCheck, Loader2, Star, Tag, Lock,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useCartStore } from '@/store/cart';
-import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/utils/format';
+import { formatPrice, hasDiscount, effectivePrice, discountPercent, tieredUnitPrice, priceTierRows } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import type { Product, Promotion } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { applyPromotionToProduct } from '@/utils/promotions';
+import { useAuth } from '@/components/AuthProvider';
 
 const WHATSAPP = '5493492330291'; // Force Vercel redeploy
 
@@ -30,6 +31,7 @@ export default function ProductoDetail() {
   const [activeImg, setActiveImg] = useState(0);
 
   const addItem = useCartStore((s) => s.addItem);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!id) {
@@ -40,7 +42,7 @@ export default function ProductoDetail() {
     const supabase = createClient();
     supabase
       .from('products')
-      .select('*, category:categories(*)')
+      .select('*, category:categories(*), price_tiers:product_price_tiers(id, product_id, min_qty, price)')
       .eq('id', id)
       .single()
       .then(async ({ data }) => {
@@ -51,7 +53,7 @@ export default function ProductoDetail() {
         if (p?.category_id) {
           const { data: rel } = await supabase
             .from('products')
-            .select('*, category:categories(*)')
+            .select('*, category:categories(*), price_tiers:product_price_tiers(id, product_id, min_qty, price)')
             .eq('category_id', p.category_id)
             .neq('id', p.id)
             .limit(4);
@@ -123,7 +125,9 @@ export default function ProductoDetail() {
     (src, i, arr): src is string => !!src && arr.indexOf(src) === i
   );
   const mainImg = gallery[Math.min(activeImg, gallery.length - 1)];
-  const consultMsg = `🐾 ¡Hola Hipermascota! Quería consultar por: ${product.name} (${formatPrice(effectivePrice(displayProduct))}).`;
+  const consultMsg = user
+    ? `🐾 ¡Hola Hipermascota! Quería consultar por: ${product.name} (${formatPrice(tieredUnitPrice(displayProduct, qty))}).`
+    : `🐾 ¡Hola Hipermascota! Quería consultar por: ${product.name}.`;
 
   const handleAdd = () => {
     addItem(displayProduct, qty);
@@ -206,19 +210,29 @@ export default function ProductoDetail() {
           <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">
             {product.name}
           </h1>
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
-            <p className={cn('text-3xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
-              {formatPrice(effectivePrice(displayProduct))}
-            </p>
-            {onSale && (
-              <>
-                <span className="text-xl text-gray-500 line-through">{formatPrice(product.price)}</span>
-                <span className="bg-red-100 text-red-700 text-sm font-bold px-2 py-0.5 rounded-lg">
-                  -{discountPercent(displayProduct)}%
-                </span>
-              </>
-            )}
-          </div>
+          {user ? (
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
+              <p className={cn('text-3xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
+                {formatPrice(tieredUnitPrice(displayProduct, qty))}
+              </p>
+              {onSale && (
+                <>
+                  <span className="text-xl text-gray-500 line-through">{formatPrice(product.price)}</span>
+                  <span className="bg-red-100 text-red-700 text-sm font-bold px-2 py-0.5 rounded-lg">
+                    -{discountPercent(displayProduct)}%
+                  </span>
+                </>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 text-sm font-bold px-4 py-2 rounded-xl mb-4 w-fit transition-colors"
+            >
+              <Lock className="w-4 h-4" />
+              Iniciá sesión para ver el precio
+            </Link>
+          )}
 
           {outOfStock ? (
             <span className="inline-flex w-fit items-center bg-red-50 text-red-600 text-sm font-semibold px-3 py-1.5 rounded-full mb-4">
@@ -257,6 +271,26 @@ export default function ProductoDetail() {
             </div>
           )}
 
+          {user && priceTierRows(displayProduct).length > 1 && (
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 mb-6">
+              <p className="text-sm font-bold text-gray-700 mb-2">Precios por cantidad</p>
+              <ul className="space-y-1 text-sm">
+                {priceTierRows(displayProduct).map((row) => (
+                  <li
+                    key={row.qty}
+                    className={cn(
+                      'flex justify-between',
+                      qty >= row.qty ? 'text-brand-700 font-bold' : 'text-gray-500'
+                    )}
+                  >
+                    <span>{row.qty === 1 ? '1 unidad' : `${row.qty}+ unidades`}</span>
+                    <span>{formatPrice(row.price)} c/u</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {!outOfStock && (
             <div className="flex items-center gap-3 mb-5">
               <span className="text-sm font-semibold text-gray-600">Cantidad</span>
@@ -281,6 +315,15 @@ export default function ProductoDetail() {
           )}
 
           <div className="flex flex-col sm:flex-row gap-3">
+            {!user ? (
+              <Link
+                href="/login"
+                className="flex-1 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-2xl transition-all shadow-lg shadow-brand-600/20"
+              >
+                <Lock className="w-5 h-5" />
+                Iniciá sesión para comprar
+              </Link>
+            ) : (
             <button
               onClick={handleAdd}
               disabled={outOfStock || added}
@@ -301,6 +344,7 @@ export default function ProductoDetail() {
                 <><ShoppingCart className="w-5 h-5" /> Agregar al pedido</>
               )}
             </button>
+            )}
             <a
               href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(consultMsg)}`}
               target="_blank"

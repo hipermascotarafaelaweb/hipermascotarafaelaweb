@@ -35,7 +35,7 @@ const fetchData = cache(async () => {
   const [productsRes, categoriesRes, promotionsRes, promotionProductsRes] = await Promise.all([
     supabase
       .from('products')
-      .select('*, category:categories(*)')
+      .select('*, category:categories(*), price_tiers:product_price_tiers(id, product_id, min_qty, price)')
       .eq('is_featured', true)
       .order('created_at', { ascending: false })
       .limit(8),

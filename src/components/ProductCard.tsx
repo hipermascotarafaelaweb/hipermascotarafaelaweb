@@ -2,21 +2,25 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingCart, PawPrint, Check, Star, Tag } from 'lucide-react';
+import { ShoppingCart, PawPrint, Check, Star, Tag, Lock } from 'lucide-react';
 import { useState, memo } from 'react';
 import type { Product, Promotion } from '@/types';
 import { useCartStore } from '@/store/cart';
-import { formatPrice, hasDiscount, effectivePrice, discountPercent } from '@/utils/format';
+import { formatPrice, hasDiscount, tieredUnitPrice, discountPercent } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import PromotionBadge from './PromotionBadge';
 import { isPromotionActive } from '@/utils/promotions';
+import { useAuth } from './AuthProvider';
 
 function ProductCard({ product, promotion, index = 0 }: { product: Product; promotion?: Promotion; index?: number }) {
   const addItem = useCartStore((s) => s.addItem);
+  const { user } = useAuth();
   const [added, setAdded] = useState(false);
   const outOfStock = product.stock <= 0;
   const lowStock = product.stock > 0 && product.stock <= 5;
   const onSale = hasDiscount(product);
+  const unitPrice = tieredUnitPrice(product, 1);
+  const hasBulkPricing = (product.price_tiers?.length ?? 0) > 0;
 
   const handleAdd = () => {
     addItem(product);
@@ -95,42 +99,59 @@ function ProductCard({ product, promotion, index = 0 }: { product: Product; prom
         )}
 
         <div className="mt-auto pt-3 border-t border-gray-50">
-          <div className="mb-2.5">
-            {onSale && (
-              <span className="block text-xs text-gray-500 line-through leading-none">
-                {formatPrice(product.price)}
-              </span>
-            )}
-            <span className={cn('block text-lg sm:text-xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
-              {formatPrice(effectivePrice(product))}
-            </span>
-          </div>
-          <button
-            onClick={handleAdd}
-            disabled={outOfStock || added}
-            className={cn(
-              'w-full flex items-center justify-center gap-1.5 text-white text-sm font-bold px-3 py-2.5 rounded-xl transition-all duration-300',
-              added
-                ? 'bg-brand-500'
-                : outOfStock
-                  ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-sm shadow-brand-600/20'
-            )}
-          >
-            {added ? (
-              <>
-                <Check className="w-4 h-4" />
-                Sumado al pedido
-              </>
-            ) : outOfStock ? (
-              'Sin stock'
-            ) : (
-              <>
-                <ShoppingCart className="w-4 h-4" />
-                Agregar
-              </>
-            )}
-          </button>
+          {user ? (
+            <>
+              <div className="mb-2.5">
+                {onSale && (
+                  <span className="block text-xs text-gray-500 line-through leading-none">
+                    {formatPrice(product.price)}
+                  </span>
+                )}
+                <span className={cn('block text-lg sm:text-xl font-extrabold', onSale ? 'text-red-600' : 'text-gray-900')}>
+                  {formatPrice(unitPrice)}
+                </span>
+                {hasBulkPricing && (
+                  <span className="block text-[11px] text-brand-600 font-semibold mt-0.5">
+                    Precios por mayor disponibles
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleAdd}
+                disabled={outOfStock || added}
+                className={cn(
+                  'w-full flex items-center justify-center gap-1.5 text-white text-sm font-bold px-3 py-2.5 rounded-xl transition-all duration-300',
+                  added
+                    ? 'bg-brand-500'
+                    : outOfStock
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : 'bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-sm shadow-brand-600/20'
+                )}
+              >
+                {added ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Sumado al pedido
+                  </>
+                ) : outOfStock ? (
+                  'Sin stock'
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" />
+                    Agregar
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="w-full flex items-center justify-center gap-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 text-sm font-bold px-3 py-2.5 rounded-xl transition-colors"
+            >
+              <Lock className="w-4 h-4" />
+              Ver precio
+            </Link>
+          )}
         </div>
       </div>
     </div>

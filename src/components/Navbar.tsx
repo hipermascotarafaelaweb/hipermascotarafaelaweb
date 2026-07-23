@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ShoppingCart, Menu, X, History } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ShoppingCart, Menu, X, History, LogIn, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/cart';
 import { useMounted } from '@/hooks/useMounted';
+import { useAuth } from './AuthProvider';
+import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/utils/cn';
 import Logo from './Logo';
 
@@ -22,7 +24,9 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
   // re-renderice cuando cambia el carrito.
   const items = useCartStore((s) => s.items);
   const pathname = usePathname();
+  const router = useRouter();
   const mounted = useMounted();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -32,6 +36,13 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
   }, []);
 
   const count = mounted ? items.reduce((sum, i) => sum + i.quantity, 0) : 0;
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <header
@@ -74,6 +85,28 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
               <History className="w-4 h-4" />
               <span className="hidden md:inline">Mis Pedidos</span>
             </Link>
+
+            {mounted && (
+              user ? (
+                <button
+                  onClick={handleLogout}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors text-sm font-semibold"
+                  aria-label="Cerrar sesión"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden md:inline">Salir</span>
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors text-sm font-semibold"
+                  aria-label="Iniciar sesión"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span className="hidden md:inline">Ingresar</span>
+                </Link>
+              )
+            )}
 
             <button
               onClick={onCartOpen}
@@ -132,6 +165,27 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
             <History className="w-4 h-4" />
             Mis Pedidos
           </Link>
+          {user ? (
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                handleLogout();
+              }}
+              className="w-full flex items-center gap-2 py-3 px-3 rounded-xl font-semibold text-gray-700 hover:text-brand-700 hover:bg-brand-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Cerrar sesión
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 py-3 px-3 rounded-xl font-semibold text-gray-700 hover:text-brand-700 hover:bg-brand-50 transition-colors"
+            >
+              <LogIn className="w-4 h-4" />
+              Iniciar sesión
+            </Link>
+          )}
         </nav>
       )}
     </header>

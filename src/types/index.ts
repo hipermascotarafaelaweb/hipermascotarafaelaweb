@@ -29,6 +29,15 @@ export interface Product {
   size?: string | null;        // chico | mediano | grande
   life_stage?: string | null;  // cachorro | adulto | senior
   diet?: string | null;        // sin_granos | hipoalergenico | estandar
+  /** Escalones de precio por cantidad (opcional). Solo llega con datos si el usuario está logueado. */
+  price_tiers?: PriceTier[];
+}
+
+export interface PriceTier {
+  id: number;
+  product_id: number;
+  min_qty: number;
+  price: number;
 }
 
 export interface CartItem {

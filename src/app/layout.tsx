@@ -3,6 +3,7 @@ import { Inter, Baloo_2, Itim, Nunito } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
+import AuthProvider from '@/components/AuthProvider';
 
 const SITE_URL = 'https://hipermascotarafaelaweb.vercel.app';
 
@@ -79,7 +80,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="min-h-full flex flex-col bg-white font-sans text-gray-800 overflow-x-hidden">
-        <ClientLayout>{children}</ClientLayout>
+        <AuthProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

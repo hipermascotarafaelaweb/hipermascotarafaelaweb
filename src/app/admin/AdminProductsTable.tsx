@@ -8,6 +8,11 @@ import type { Product, Category, PetType } from '@/types';
 import { formatPrice, hasDiscount } from '@/utils/format';
 import { compressImage } from '@/utils/imageCompress';
 
+interface PriceTierForm {
+  min_qty: string;
+  price: string;
+}
+
 interface ProductForm {
   name: string;
   description: string;
@@ -20,6 +25,7 @@ interface ProductForm {
   image: File | null;
   gallery: File[];
   existingImages: string[];
+  priceTiers: PriceTierForm[];
 }
 
 const emptyForm: ProductForm = {
@@ -34,6 +40,7 @@ const emptyForm: ProductForm = {
   image: null,
   gallery: [],
   existingImages: [],
+  priceTiers: [],
 };
 
 const petLabels: Record<PetType, string> = {
@@ -74,8 +81,13 @@ export default function AdminProductsTable({
     setError('');
   };
 
-  const openEdit = (product: Product) => {
+  const openEdit = async (product: Product) => {
     setEditingId(product.id);
+    const { data: tiers } = await supabase
+      .from('product_price_tiers')
+      .select('min_qty, price')
+      .eq('product_id', product.id)
+      .order('min_qty');
     setForm({
       name: product.name,
       description: product.description || '',
@@ -88,6 +100,7 @@ export default function AdminProductsTable({
       image: null,
       gallery: [],
       existingImages: product.images ?? [],
+      priceTiers: (tiers ?? []).map((t) => ({ min_qty: String(t.min_qty), price: String(t.price) })),
     });
     setCurrentImage(product.image_url);
     setShowForm(true);
@@ -162,14 +175,26 @@ export default function AdminProductsTable({
       ...(image_url !== undefined && { image_url }),
     };
 
-    const { error: dbError } = editingId
-      ? await supabase.from('products').update(payload).eq('id', editingId)
-      : await supabase.from('products').insert(payload);
+    const { data: savedProduct, error: dbError } = editingId
+      ? await supabase.from('products').update(payload).eq('id', editingId).select('id').single()
+      : await supabase.from('products').insert(payload).select('id').single();
 
-    if (dbError) {
+    if (dbError || !savedProduct) {
       setError('No se pudo guardar el producto.');
       setLoading(false);
       return;
+    }
+
+    // Sincronizar escalones de precio por cantidad: se borran y se vuelven a crear.
+    const validTiers = form.priceTiers
+      .map((t) => ({ min_qty: parseInt(t.min_qty), price: parseFloat(t.price) }))
+      .filter((t) => Number.isInteger(t.min_qty) && t.min_qty > 0 && t.price > 0);
+
+    await supabase.from('product_price_tiers').delete().eq('product_id', savedProduct.id);
+    if (validTiers.length > 0) {
+      await supabase.from('product_price_tiers').insert(
+        validTiers.map((t) => ({ product_id: savedProduct.id, min_qty: t.min_qty, price: t.price }))
+      );
     }
 
     setShowForm(false);
@@ -483,6 +508,69 @@ export default function AdminProductsTable({
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Precios por cantidad (opcional)
+                </label>
+                <p className="text-xs text-gray-400 mb-2">
+                  A partir de cuántas unidades cambia el precio unitario. Ej: 2 o más → $700 c/u.
+                </p>
+                <div className="space-y-2">
+                  {form.priceTiers.map((tier, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Cantidad mín."
+                        value={tier.min_qty}
+                        onChange={(e) => {
+                          const priceTiers = [...form.priceTiers];
+                          priceTiers[i] = { ...priceTiers[i], min_qty: e.target.value };
+                          setForm({ ...form, priceTiers });
+                        }}
+                        className="w-28 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                      <span className="text-gray-400 text-sm shrink-0">→</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Precio c/u"
+                        value={tier.price}
+                        onChange={(e) => {
+                          const priceTiers = [...form.priceTiers];
+                          priceTiers[i] = { ...priceTiers[i], price: e.target.value };
+                          setForm({ ...form, priceTiers });
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm({ ...form, priceTiers: form.priceTiers.filter((_, j) => j !== i) })
+                        }
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                        aria-label="Quitar escalón"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {form.priceTiers.length < 4 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm({ ...form, priceTiers: [...form.priceTiers, { min_qty: '', price: '' }] })
+                      }
+                      className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Agregar escalón
+                    </button>
+                  )}
+                </div>
               </div>
 
               <label className="flex items-center gap-2.5 cursor-pointer bg-brand-50/60 rounded-xl px-4 py-3">

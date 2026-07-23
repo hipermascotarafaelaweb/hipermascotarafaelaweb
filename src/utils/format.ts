@@ -21,6 +21,35 @@ export function discountPercent(p: Priced): number {
   return Math.round((1 - (p.sale_price as number) / p.price) * 100);
 }
 
+interface PriceTierLike {
+  min_qty: number;
+  price: number;
+}
+
+type PricedWithTiers = Priced & { price_tiers?: PriceTierLike[] | null };
+
+/** Precio unitario según cantidad: el escalón de mayor min_qty que sea <= qty, o el precio normal. */
+export function tieredUnitPrice(p: PricedWithTiers, qty: number): number {
+  const tiers = p.price_tiers;
+  if (!tiers || tiers.length === 0) return effectivePrice(p);
+  let best: PriceTierLike | null = null;
+  for (const t of tiers) {
+    if (t.min_qty <= qty && (!best || t.min_qty > best.min_qty)) best = t;
+  }
+  return best ? best.price : effectivePrice(p);
+}
+
+/** Lista ordenada de escalones para mostrar (incluye la unidad 1 si no está definida explícitamente). */
+export function priceTierRows(p: PricedWithTiers): { qty: number; price: number }[] {
+  const tiers = p.price_tiers ?? [];
+  const hasOne = tiers.some((t) => t.min_qty === 1);
+  const rows = [...tiers]
+    .sort((a, b) => a.min_qty - b.min_qty)
+    .map((t) => ({ qty: t.min_qty, price: t.price }));
+  if (!hasOne) rows.unshift({ qty: 1, price: effectivePrice(p) });
+  return rows;
+}
+
 /** Formatea una fecha ISO a formato local argentino legible. */
 export function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('es-AR', {

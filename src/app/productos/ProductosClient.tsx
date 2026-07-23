@@ -18,7 +18,7 @@ export default async function ProductosClient({ initialCategory = 'all' }: Produ
   const [productsRes, categoriesRes, promotionsRes, promotionProductsRes] = await Promise.all([
     supabase
       .from('products')
-      .select('*, category:categories(*)')
+      .select('*, category:categories(*), price_tiers:product_price_tiers(id, product_id, min_qty, price)')
       .order('created_at', { ascending: false }),
     supabase.from('categories').select('*').order('name'),
     supabase

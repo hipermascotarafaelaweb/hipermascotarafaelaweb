@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { isPromotionActive, applyPromotionDiscount } from '@/utils/promotions';
 import { isRateLimited } from '@/utils/rateLimit';
+import { tieredUnitPrice } from '@/utils/format';
 import type { Promotion } from '@/types';
 
 interface CartItem {
@@ -166,6 +167,19 @@ export async function POST(request: NextRequest) {
 
     const productMap = new Map(products.map((p) => [p.id, p]));
 
+    // Escalones de precio por cantidad, para que el total cobrado respete
+    // el precio por mayor que vio el cliente en el catálogo.
+    const tiersByProduct = new Map<number, { min_qty: number; price: number }[]>();
+    const { data: tierRows } = await supabase
+      .from('product_price_tiers')
+      .select('product_id, min_qty, price')
+      .in('product_id', productIds);
+    for (const t of tierRows || []) {
+      const list = tiersByProduct.get(t.product_id) ?? [];
+      list.push({ min_qty: t.min_qty, price: t.price });
+      tiersByProduct.set(t.product_id, list);
+    }
+
     // Promociones activas vinculadas a estos productos, para aplicar el
     // descuento server-side y que el total cobrado coincida con el carrito.
     const promoByProduct = new Map<number, Promotion>();
@@ -220,7 +234,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const base = product.sale_price ?? product.price;
+      const base = tieredUnitPrice(
+        { price: product.price, sale_price: product.sale_price, price_tiers: tiersByProduct.get(productId) },
+        qty
+      );
       const promo = promoByProduct.get(productId);
       const price = promo
         ? Math.min(base, Math.round(applyPromotionDiscount(product.price, promo)))
