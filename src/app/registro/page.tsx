@@ -75,11 +75,11 @@ export default function RegistroPage() {
     setLoading(false);
 
     if (signUpError) {
+      const msg = signUpError.message.toLowerCase();
       setError(
-        signUpError.message.toLowerCase().includes('already registered') ||
-          signUpError.message.toLowerCase().includes('already been registered')
+        msg.includes('already registered') || msg.includes('already been registered')
           ? 'Ese email ya está registrado. Iniciá sesión en su lugar.'
-          : 'No se pudo crear la cuenta. Probá de nuevo.'
+          : `No se pudo crear la cuenta: ${signUpError.message}`
       );
       return;
     }
