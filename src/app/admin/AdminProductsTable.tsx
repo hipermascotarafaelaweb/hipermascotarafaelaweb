@@ -236,7 +236,7 @@ export default function AdminProductsTable({
                       <div className="flex items-center gap-3">
                         <div className="relative w-11 h-11 rounded-lg bg-brand-50 overflow-hidden shrink-0">
                           {product.image_url ? (
-                            <Image src={product.image_url} alt="" fill className="object-cover" sizes="44px" />
+                            <Image src={product.image_url} alt="" fill className="object-cover" sizes="44px" unoptimized />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-brand-200">
                               <PawPrint className="w-5 h-5" />
@@ -320,7 +320,7 @@ export default function AdminProductsTable({
               <div className="flex items-center gap-4">
                 <div className="relative w-20 h-20 rounded-xl bg-brand-50 overflow-hidden shrink-0 border border-gray-100">
                   {previewUrl ? (
-                    <Image src={previewUrl} alt="" fill className="object-cover" sizes="80px" />
+                    <Image src={previewUrl} alt="" fill className="object-cover" sizes="80px" unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-brand-200">
                       <PawPrint className="w-8 h-8" />
@@ -349,7 +349,7 @@ export default function AdminProductsTable({
                 <div className="flex flex-wrap gap-2.5">
                   {form.existingImages.map((src) => (
                     <div key={src} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-100 group">
-                      <Image src={src} alt="" fill className="object-cover" sizes="64px" />
+                      <Image src={src} alt="" fill className="object-cover" sizes="64px" unoptimized />
                       <button
                         type="button"
                         onClick={() =>
@@ -364,7 +364,7 @@ export default function AdminProductsTable({
                   ))}
                   {form.gallery.map((file, i) => (
                     <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-brand-200">
-                      <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" sizes="64px" />
+                      <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" sizes="64px" unoptimized />
                       <button
                         type="button"
                         onClick={() =>

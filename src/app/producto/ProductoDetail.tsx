@@ -153,6 +153,7 @@ export default function ProductoDetail() {
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
+                unoptimized
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-brand-200">
@@ -185,7 +186,7 @@ export default function ProductoDetail() {
                   )}
                   aria-label={`Ver foto ${i + 1}`}
                 >
-                  <Image src={src} alt="" fill className="object-cover" sizes="80px" />
+                  <Image src={src} alt="" fill className="object-cover" sizes="80px" unoptimized />
                 </button>
               ))}
             </div>
