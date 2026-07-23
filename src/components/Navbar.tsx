@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShoppingCart, Menu, X, History, LogIn, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LogIn, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/cart';
 import { useMounted } from '@/hooks/useMounted';
@@ -77,25 +77,26 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
                 );
               })}
             </nav>
-            <Link
-              href="/historial"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors text-sm font-semibold"
-              aria-label="Mis Pedidos"
-            >
-              <History className="w-4 h-4" />
-              <span className="hidden md:inline">Mis Pedidos</span>
-            </Link>
-
             {mounted && (
               user ? (
-                <button
-                  onClick={handleLogout}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors text-sm font-semibold"
-                  aria-label="Cerrar sesión"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden md:inline">Salir</span>
-                </button>
+                <>
+                  <Link
+                    href="/perfil"
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors text-sm font-semibold"
+                    aria-label="Mi Perfil"
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="hidden md:inline">Mi Perfil</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors text-sm font-semibold"
+                    aria-label="Cerrar sesión"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="hidden md:inline">Salir</span>
+                  </button>
+                </>
               ) : (
                 <Link
                   href="/login"
@@ -152,30 +153,32 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
               </Link>
             );
           })}
-          <Link
-            href="/historial"
-            onClick={() => setMenuOpen(false)}
-            className={cn(
-              'flex items-center gap-2 py-3 px-3 rounded-xl font-semibold transition-colors',
-              pathname === '/historial'
-                ? 'bg-brand-50 text-brand-700'
-                : 'text-gray-700 hover:text-brand-700 hover:bg-brand-50'
-            )}
-          >
-            <History className="w-4 h-4" />
-            Mis Pedidos
-          </Link>
           {user ? (
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                handleLogout();
-              }}
-              className="w-full flex items-center gap-2 py-3 px-3 rounded-xl font-semibold text-gray-700 hover:text-brand-700 hover:bg-brand-50 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Cerrar sesión
-            </button>
+            <>
+              <Link
+                href="/perfil"
+                onClick={() => setMenuOpen(false)}
+                className={cn(
+                  'flex items-center gap-2 py-3 px-3 rounded-xl font-semibold transition-colors',
+                  pathname === '/perfil'
+                    ? 'bg-brand-50 text-brand-700'
+                    : 'text-gray-700 hover:text-brand-700 hover:bg-brand-50'
+                )}
+              >
+                <User className="w-4 h-4" />
+                Mi Perfil
+              </Link>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full flex items-center gap-2 py-3 px-3 rounded-xl font-semibold text-gray-700 hover:text-brand-700 hover:bg-brand-50 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Cerrar sesión
+              </button>
+            </>
           ) : (
             <Link
               href="/login"

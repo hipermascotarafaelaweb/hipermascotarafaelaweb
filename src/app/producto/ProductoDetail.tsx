@@ -302,7 +302,19 @@ export default function ProductoDetail() {
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-8 text-center font-bold tabular-nums">{qty}</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={product.stock}
+                  value={qty}
+                  onChange={(e) => {
+                    const n = parseInt(e.target.value, 10);
+                    if (Number.isNaN(n)) return;
+                    setQty(Math.min(product.stock, Math.max(1, n)));
+                  }}
+                  className="w-16 text-center font-bold tabular-nums border border-gray-200 rounded-xl py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  aria-label="Cantidad"
+                />
                 <button
                   onClick={() => setQty((q) => Math.min(product.stock, q + 1))}
                   className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:border-brand-400 hover:text-brand-600 transition-colors"
